@@ -937,7 +937,7 @@
     // ---------- Événements ----------
 
     function onClick(e) {
-      e.target.closest("button") ?? e.target;
+      const t = e.target.closest("button") ?? e.target;
       if (t.id === "btn-initiative") return lancerInitiative();
       if (t.id === "btn-embuscade") return lancerEmbuscade();
       if (t.dataset.onglet) return montrer(t.dataset.onglet);

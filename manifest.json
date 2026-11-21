@@ -4,8 +4,8 @@
   "manifest_version": 1,
   "action": {
     "title": "Fiche Midgar",
-    "icon": "/icon.svg",
-    "popover": "/fiche.html",
+    "icon": "https://kasilt.github.io/midgar-owl/icon.svg",
+    "popover": "https://kasilt.github.io/midgar-owl/fiche.html",
     "width": 480,
     "height": 700
   }

@@ -4,6 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>Midgar - Fiche</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
   <style>
     :root {
       --fond: #23262e;
@@ -61,6 +62,12 @@
 
     .pa input {
       width: 64px;
+    }
+
+    .material-symbols-outlined {
+      font-size: 18px;
+      vertical-align: middle;
+      line-height: 1;
     }
 
     #statut {
@@ -647,7 +654,7 @@
           return `<tr>
         <td>${s.nom}</td>
         <td><input type="number" min="0" max="${s.cases}" data-type="spec" data-id="${esc(k)}" value="${points}"> / ${s.cases}</td>
-        <td>+${bonusSpec(s)}${info}</td>
+        <td>+${bonusSpec(s)}</td>
         <td class="resume">${s.effet}</td>
       </tr>`;
         }).join("");
@@ -671,7 +678,7 @@
         <td>${c.nom}${indice}</td>
         <td><select data-type="compsym" data-id="${i}">${option("", "-")}${option("/", "/")}${option("o", "o")}</select></td>
         <td><input type="number" min="0" data-type="compniv" data-id="${i}" value="${d.niveau}"></td>
-        <td><button data-achat="${i}">Acheter</button> ${cout} PA${accordMJ ? "*" : ""}</td>
+                <td><button data-achat="${i}" title="Acheter le niveau suivant"><span class="material-symbols-outlined">stat_3</span></button> ${cout} PA${accordMJ ? "*" : ""}</td>
         <td>
           <button class="bouton-jet" data-jet="${i}">Jet</button>
           <button class="bouton-jet" data-gear="${i}" title="Spécialisations associées">⚙</button>
@@ -930,7 +937,7 @@
     // ---------- Événements ----------
 
     function onClick(e) {
-      const t = e.target;
+      e.target.closest("button") ?? e.target;
       if (t.id === "btn-initiative") return lancerInitiative();
       if (t.id === "btn-embuscade") return lancerEmbuscade();
       if (t.dataset.onglet) return montrer(t.dataset.onglet);

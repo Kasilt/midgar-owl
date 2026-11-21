@@ -877,6 +877,12 @@
       selSpec.value = ancienSpec;
     }
 
+    // Un MJ voit toutes les fiches ; un joueur seulement celles des tokens qu'il a créés
+    async function peutOuvrir(item) {
+      if (!item) return false;
+      if (OBR.player.role === "GM") return true;
+      return item.createdUserId === OBR.player.id;
+    }
     // ---------- Sauvegarde et chargement ----------
 
     async function sauver() {
@@ -914,6 +920,15 @@
         statut.textContent = "Ce token n'est plus sur la table.";
         statut.hidden = false;
         fiche.hidden = true;
+        return;
+      }
+
+      if (!(await peutOuvrir(item))) {
+        tokenId = null;
+        statut.textContent = "Aucun personnage autorisé sélectionné. Sélectionne un de tes personnages.";
+        statut.hidden = false;
+        fiche.hidden = true;
+        entete.textContent = "Accès refusé à ce token";
         return;
       }
 
@@ -1248,17 +1263,31 @@
       OBR.player.onChange(async (joueur) => {
         const id = joueur.selection?.[0];
         if (!id || id === tokenId) return;
+
+        const [item] = await OBR.scene.items.getItems([id]);
+        if (!(await peutOuvrir(item))) {
+          // On garde la fiche actuelle, et on prévient
+          const entete = document.getElementById("entete");
+          if (tokenId) {
+            entete.textContent = "Token non autorisé : fiche précédente conservée";
+          }
+          return;
+        }
+
         tokenId = id;
         localStorage.setItem(CLE_DERNIER, id);
         await charger(true);
       });
 
       const selection = await OBR.player.getSelection();
-      if (selection?.[0]) {
-        tokenId = selection[0];
-        localStorage.setItem(CLE_DERNIER, tokenId);
-      } else {
-        tokenId = localStorage.getItem(CLE_DERNIER);
+      const candidat = selection?.[0] ?? localStorage.getItem(CLE_DERNIER);
+      tokenId = null;
+      if (candidat) {
+        const [item] = await OBR.scene.items.getItems([candidat]);
+        if (await peutOuvrir(item)) {
+          tokenId = candidat;
+          localStorage.setItem(CLE_DERNIER, candidat);
+        }
       }
       await charger(true);
     });

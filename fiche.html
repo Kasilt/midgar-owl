@@ -395,6 +395,17 @@
       -moz-appearance: textfield;
       appearance: textfield;
     }
+
+    .form-ajout {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+    }
+
+    #ajout-nom {
+      width: 180px;
+    }
   </style>
 </head>
 
@@ -564,14 +575,51 @@
     let etat = defaut();
     let uiOuvert = null;
     let jetUnique = null;
+    let formAjout = null;   // caractéristique dont le formulaire d'ajout est ouvert
 
     function defaut() {
       return { identite: {}, attributs: {}, carrieres: {}, specs: {}, comps: {}, pa: 0, blessures: 0 };
     }
 
-    function niveauComp(i) {
-      const d = etat.comps[i] || {};
-      return { sym: d.sym ?? "", niveau: d.niveau ?? 0, specs: d.specs ?? [] };
+    // Liste complète : compétences de base (clés "0", "1", …) puis compétences ajoutées (clés "p…")
+    function listeComps() {
+      const base = COMPS.map((c, i) => ({ key: String(i), attr: c.attr, nom: c.nom }));
+      const perso = (etat.perso || []).map(p => ({ key: "p" + p.id, attr: p.attr, nom: p.nom, type: p.type }));
+      return [...base, ...perso];
+    }
+
+    function compDe(key) {
+      return listeComps().find(c => c.key === key);
+    }
+
+    function niveauComp(key) {
+      const d = etat.comps[key] || {};
+      const perso = (etat.perso || []).find(p => "p" + p.id === key);
+      return {
+        sym: d.sym ?? (perso ? perso.type : ""),
+        niveau: d.niveau ?? 0,
+        specs: d.specs ?? []
+      };
+    }
+
+    async function ajouterCompetence(attr, nom, type) {
+      etat.perso = [...(etat.perso || []), { id: Date.now().toString(36), attr, nom, type }];
+      formAjout = null;
+      await sauver();
+      rendre();
+    }
+
+    function formulaireAjout(attr) {
+      return `<tr><td colspan="5" class="panneau">
+    <div class="form-ajout">
+      <input type="text" id="ajout-nom" placeholder="Libellé de la compétence">
+      <select id="ajout-type">
+        <option value="">-</option><option value="/">/</option><option value="o">o</option>
+      </select>
+      <button data-ajout="${esc(attr)}">Ajouter</button>
+      <button data-ajout-annuler="1">Annuler</button>
+    </div>
+  </td></tr>`;
     }
 
     function specKey(s) { return s.groupe + ":" + s.nom; }
@@ -728,33 +776,38 @@
       <table><tr><th>Spécialisation</th><th>Points</th><th>Bonus</th><th>Effet</th></tr>${lignes}</table>`;
       }).join("");
 
+      const toutes = listeComps();
       let htmlComp = `<table><tr><th>Compétence</th><th></th><th>Niveau</th><th>Achat</th><th></th></tr>`;
       for (const attr of ATTRIBUTS) {
-        const liste = COMPS.map((c, i) => ({ c, i })).filter(x => x.c.attr === attr);
-        if (liste.length === 0) continue;
-        htmlComp += `<tr class="attr-titre"><td colspan="5">${attr} (${etat.attributs[attr] || 0})</td></tr>`;
-        for (const { c, i } of liste) {
-          const d = niveauComp(i);
+        const liste = toutes.filter(c => c.attr === attr);
+        htmlComp += `<tr class="attr-titre">
+      <td colspan="4">${attr} (${etat.attributs[attr] || 0})</td>
+      <td><button class="bouton-jet" data-gear-attr="${attr}" title="Ajouter une compétence">⚙</button></td>
+    </tr>`;
+        if (formAjout === attr) htmlComp += formulaireAjout(attr);
+
+        for (const c of liste) {
+          const d = niveauComp(c.key);
           const option = (v, libelle) => `<option value="${v}" ${d.sym === v ? "selected" : ""}>${libelle}</option>`;
           const { cout, accordMJ } = coutProchainNiveau(d);
           const indice = d.specs.length ? ` <span class="resume">(${d.specs.length} spé.)</span>` : "";
           htmlComp += `<tr>
-        <td>${c.nom}${indice}</td>
-        <td><select data-type="compsym" data-id="${i}">${option("", "-")}${option("/", "/")}${option("o", "o")}</select></td>
-        <td><input type="number" min="0" data-type="compniv" data-id="${i}" value="${d.niveau}"></td>
-                <td><button data-achat="${i}" title="Acheter le niveau suivant"><span class="material-symbols-outlined">stat_3</span></button> ${cout} PA${accordMJ ? "*" : ""}</td>
+        <td>${esc(c.nom)}${indice}</td>
+        <td><select data-type="compsym" data-id="${c.key}">${option("", "-")}${option("/", "/")}${option("o", "o")}</select></td>
+        <td><input type="number" min="0" data-type="compniv" data-id="${c.key}" value="${d.niveau}"></td>
+        <td><button data-achat="${c.key}">Acheter</button> ${cout} PA${accordMJ ? "*" : ""}</td>
         <td>
-          <button class="bouton-jet" data-jet="${i}">Jet</button>
-          <button class="bouton-jet" data-gear="${i}" title="Spécialisations associées">⚙</button>
+          <button class="bouton-jet" data-jet="${c.key}">Jet</button>
+          <button class="bouton-jet" data-gear="${c.key}" title="Spécialisations associées">⚙</button>
         </td>
       </tr>`;
-          if (uiOuvert === i) htmlComp += panneauSpecs(i, d);
+          if (uiOuvert === c.key) htmlComp += panneauSpecs(c.key, d);
         }
       }
       htmlComp += `</table>`;
       document.getElementById("competences").innerHTML = htmlComp;
 
-      selComp.innerHTML = COMPS.map((c, i) => `<option value="${i}">${c.attr} — ${c.nom}</option>`).join("");
+      selComp.innerHTML = toutes.map(c => `<option value="${c.key}">${c.attr} — ${esc(c.nom)}</option>`).join("");
       selComp.value = ancienComp;
 
       const optionsSpec = SPECS.filter(s => bonusSpec(s) > 0)
@@ -808,6 +861,7 @@
       if (nouveauToken) {
         uiOuvert = null;
         jetUnique = null;
+        formAjout = null;
         montrer("infos");
         window.scrollTo(0, 0);
       }
@@ -828,8 +882,7 @@
       const v = t.value;
 
       if (type === "jetunique") {
-        const i = Number(t.dataset.comp);
-        jetUnique = v ? { i, key: v } : null;
+        jetUnique = v ? { i: t.dataset.comp, key: v } : null;
         return;
       }
 
@@ -851,19 +904,17 @@
         const s = specDe(id);
         etat.specs[id] = Math.max(0, Math.min(Number(v) || 0, s.cases));
       } else if (type === "compsym") {
-        const i = Number(id);
-        etat.comps[i] = { ...niveauComp(i), sym: v };
+        etat.comps[id] = { ...niveauComp(id), sym: v };
       } else if (type === "compniv") {
-        const i = Number(id);
-        etat.comps[i] = { ...niveauComp(i), niveau: Math.max(0, Number(v) || 0) };
+        etat.comps[id] = { ...niveauComp(id), niveau: Math.max(0, Number(v) || 0) };
       } else if (type === "compspec") {
-        const i = Number(t.dataset.comp);
+        const key = t.dataset.comp;
         const cle = t.dataset.key;
-        const d = niveauComp(i);
+        const d = niveauComp(key);
         const liste = t.checked
           ? [...new Set([...d.specs, cle])]
           : d.specs.filter(k => k !== cle);
-        etat.comps[i] = { ...d, specs: liste };
+        etat.comps[key] = { ...d, specs: liste };
       } else if (type === "pa") {
         etat.pa = Math.max(0, Number(v) || 0);
       }
@@ -872,8 +923,8 @@
       rendre();
     }
 
-    async function acheter(i) {
-      const c = niveauComp(i);
+    async function acheter(key) {
+      const c = niveauComp(key);
       const { cout, accordMJ } = coutProchainNiveau(c);
 
       if (etat.pa < cout) {
@@ -883,7 +934,7 @@
       if (accordMJ && !confirm("L'accord du MJ a-t-il été donné ?")) return;
 
       etat.pa -= cout;
-      etat.comps[i] = { ...c, niveau: c.niveau + 1 };
+      etat.comps[key] = { ...c, niveau: c.niveau + 1 };
       await sauver();
       rendre();
     }
@@ -922,9 +973,10 @@
       return { jets, somme: jets.reduce((a, b) => a + b, 0) };
     }
 
-    function calculerJet(i, clesSpec = []) {
-      const comp = COMPS[i];
-      const c = niveauComp(i);
+    function calculerJet(key, clesSpec = []) {
+      const comp = compDe(key);
+      if (!comp) return null;
+      const c = niveauComp(key);
       if (c.sym === "" && c.niveau === 0) return null;
 
       const attr = etat.attributs[comp.attr] || 0;
@@ -940,6 +992,27 @@
         niveau: c.niveau, specs, bonusS, pen,
         total: somme + bonusAttr + c.niveau + bonusS + pen
       };
+    }
+
+    function lancer(key, clesSpec = []) {
+      const r = calculerJet(key, clesSpec);
+      if (!r) {
+        const nom = compDe(key)?.nom ?? "Test";
+        return afficher(`${nom} : jet impossible`, ["Compétence à 0 sans symbole"]);
+      }
+      afficher(`${r.comp.nom} : ${r.total}`, detailJet(r));
+    }
+
+    function lancerEmbuscade() {
+      const emb = listeComps().find(c => c.nom === "Se cacher / Semer");
+      const r = calculerJet(emb.key, niveauComp(emb.key).specs);
+      if (!r) {
+        return afficher("Embuscade : jet impossible", ["Se cacher / Semer à 0 sans symbole"]);
+      }
+      afficher(`Embuscade : ${r.total}`, detailJet(r), [
+        "Les adversaires font leur jet de Voir ou Perception contre ce total.",
+        "Si personne ne te voit, l'embuscade réussit."
+      ]);
     }
 
     function afficher(titre, detail, lignes = []) {
@@ -960,15 +1033,8 @@
       return parties;
     }
 
-    function lancer(i, clesSpec = []) {
-      const r = calculerJet(i, clesSpec);
-      if (!r) {
-        return afficher(`${COMPS[i].nom} : jet impossible`, ["Compétence à 0 sans symbole"]);
-      }
-      afficher(`${r.comp.nom} : ${r.total}`, detailJet(r));
-    }
 
-    // ---------- Initiative et embuscade ----------
+    // ---------- Initiative ----------
 
     function rangsAction(score) {
       const rangs = [];
@@ -994,51 +1060,55 @@
       afficher(`Initiative : ${score}`, [`Agilité ${agi}`, `Dés ${jets.join(" + ")} = ${somme}`], lignes);
     }
 
-    function lancerEmbuscade() {
-      const i = COMPS.findIndex(c => c.nom === "Se cacher / Semer");
-      const r = calculerJet(i, niveauComp(i).specs);
-      if (!r) {
-        return afficher("Embuscade : jet impossible", ["Se cacher / Semer à 0 sans symbole"]);
-      }
-      afficher(`Embuscade : ${r.total}`, detailJet(r), [
-        "Les adversaires font leur jet de Voir ou Perception contre ce total.",
-        "Si personne ne te voit, l'embuscade réussit."
-      ]);
-    }
+
 
     // ---------- Événements ----------
 
     function onClick(e) {
       const t = e.target.closest("button") ?? e.target;
+
       if (t.id === "btn-initiative") return lancerInitiative();
       if (t.id === "btn-embuscade") return lancerEmbuscade();
+      if (t.id === "btn-recharger") return charger();
+      if (t.id === "btn-lancer") {
+        const cle = document.getElementById("sel-spec").value;
+        return lancer(document.getElementById("sel-comp").value, cle ? [cle] : []);
+      }
       if (t.dataset.onglet) return montrer(t.dataset.onglet);
 
-      if (t.dataset.gear !== undefined) {
-        const i = Number(t.dataset.gear);
-        uiOuvert = uiOuvert === i ? null : i;
+      if (t.dataset.gearAttr !== undefined) {
+        const attr = t.dataset.gearAttr;
+        formAjout = formAjout === attr ? null : attr;
+        return rendre();
+      }
+      if (t.dataset.ajout !== undefined) {
+        const nom = document.getElementById("ajout-nom").value.trim();
+        if (!nom) return alert("Indique un libellé pour la compétence.");
+        const type = document.getElementById("ajout-type").value;
+        return ajouterCompetence(t.dataset.ajout, nom, type);
+      }
+      if (t.dataset.ajoutAnnuler !== undefined) {
+        formAjout = null;
         return rendre();
       }
 
-      if (t.dataset.achat !== undefined) return acheter(Number(t.dataset.achat));
+      if (t.dataset.gear !== undefined) {
+        const key = t.dataset.gear;
+        uiOuvert = uiOuvert === key ? null : key;
+        return rendre();
+      }
+
+      if (t.dataset.achat !== undefined) return acheter(t.dataset.achat);
 
       if (t.dataset.jet !== undefined) {
-        const i = Number(t.dataset.jet);
-        const extra = jetUnique && jetUnique.i === i ? [jetUnique.key] : [];
+        const key = t.dataset.jet;
+        const extra = jetUnique && jetUnique.i === key ? [jetUnique.key] : [];
         jetUnique = null;
-        lancer(i, [...niveauComp(i).specs, ...extra]);
-        if (uiOuvert === i) rendre();
+        lancer(key, [...niveauComp(key).specs, ...extra]);
+        if (uiOuvert === key) rendre();
         return;
       }
-
-      if (t.id === "btn-lancer") {
-        const cle = document.getElementById("sel-spec").value;
-        return lancer(Number(document.getElementById("sel-comp").value), cle ? [cle] : []);
-      }
-
-      if (t.id === "btn-recharger") return charger();
     }
-
     // ---------- Démarrage ----------
 
     OBR.onReady(async () => {

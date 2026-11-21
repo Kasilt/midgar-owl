@@ -779,7 +779,9 @@
       const toutes = listeComps();
       let htmlComp = `<table><tr><th>Compétence</th><th></th><th>Niveau</th><th>Achat</th><th></th></tr>`;
       for (const attr of ATTRIBUTS) {
-        const liste = toutes.filter(c => c.attr === attr);
+        const liste = toutes
+          .filter(c => c.attr === attr)
+          .sort((a, b) => a.nom.localeCompare(b.nom, "fr", { sensitivity: "base" }));
         htmlComp += `<tr class="attr-titre">
       <td colspan="4">${attr} (${etat.attributs[attr] || 0})</td>
       <td><button class="bouton-jet" data-gear-attr="${attr}" title="Ajouter une compétence">⚙</button></td>
@@ -795,7 +797,7 @@
         <td>${esc(c.nom)}${indice}</td>
         <td><select data-type="compsym" data-id="${c.key}">${option("", "-")}${option("/", "/")}${option("o", "o")}</select></td>
         <td><input type="number" min="0" data-type="compniv" data-id="${c.key}" value="${d.niveau}"></td>
-        <td><button data-achat="${c.key}">Acheter</button> ${cout} PA${accordMJ ? "*" : ""}</td>
+        <td><button data-achat="${c.key}" title="Acheter le niveau suivant"><span class="material-symbols-outlined">stat_3</span></button> ${cout} PA${accordMJ ? "*" : ""}</td>
         <td>
           <button class="bouton-jet" data-jet="${c.key}">Jet</button>
           <button class="bouton-jet" data-gear="${c.key}" title="Spécialisations associées">⚙</button>
@@ -807,7 +809,9 @@
       htmlComp += `</table>`;
       document.getElementById("competences").innerHTML = htmlComp;
 
-      selComp.innerHTML = toutes.map(c => `<option value="${c.key}">${c.attr} — ${esc(c.nom)}</option>`).join("");
+      selComp.innerHTML = [...toutes]
+        .sort((a, b) => a.attr.localeCompare(b.attr, "fr") || a.nom.localeCompare(b.nom, "fr", { sensitivity: "base" }))
+        .map(c => `<option value="${c.key}">${c.attr} — ${esc(c.nom)}</option>`).join("");
       selComp.value = ancienComp;
 
       const optionsSpec = SPECS.filter(s => bonusSpec(s) > 0)

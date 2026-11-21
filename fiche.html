@@ -7,9 +7,9 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
   <style>
     :root {
-      --fond: #23262e;
-      --panneau: #2b2f38;
-      --champ: #1c1f26;
+      --fond: rgba(35, 38, 46, 0.80);
+      --panneau: rgba(43, 47, 56, 0.80);
+      --champ: rgba(28, 31, 38, 0.85);
       --bordure: #3c414d;
       --texte: #e8eaf0;
       --discret: #9aa1ae;
@@ -28,6 +28,8 @@
       margin: 0;
       padding: 12px;
       background: var(--fond);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
       color: var(--texte);
       font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
       font-size: 13px;
@@ -334,6 +336,52 @@
     #btn-recharger {
       margin-top: 10px;
     }
+
+    /* Attributs : 3 colonnes */
+    #attributs {
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px 10px;
+    }
+
+    #attributs label {
+      font-size: 12px;
+    }
+
+    #attributs input[type=number] {
+      width: 50px;
+    }
+
+    /* Carrières : 2 par ligne */
+    .cartes-carriere {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px 10px;
+    }
+
+    .carte {
+      background: var(--champ);
+      border: 1px solid var(--bordure);
+      border-radius: 8px;
+      padding: 6px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .carte-nom {
+      font-weight: 600;
+    }
+
+    .carte label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--discret);
+    }
+
+    .carte input[type=number] {
+      width: 50px;
+    }
   </style>
 </head>
 
@@ -601,7 +649,11 @@
       html += `<p class="resume">Blessures : ${n} / 40 · pénalité aux jets de compétence : ${penaliteBlessures()}</p>`;
       document.getElementById("blessures").innerHTML = html;
     }
-
+    const ABREV = {
+      "Intelligence": "Int", "Dextérité": "Dex", "Arts": "Art", "Volonté": "Vol",
+      "Force": "For", "Chance": "Ch", "Agilité": "Ag", "Constitution": "Con",
+      "Empathie": "Emp", "Pouvoir": "Pou", "Taille": "Tai", "Beauté": "Bt"
+    };
     function rendre() {
       const selComp = document.getElementById("sel-comp");
       const selSpec = document.getElementById("sel-spec");
@@ -615,14 +667,13 @@
       document.querySelector('[data-type="pa"]').value = etat.pa;
 
       document.getElementById("attributs").innerHTML = ATTRIBUTS.map(attr =>
-        `<label>${attr} <input type="number" min="0" data-type="attr" data-id="${attr}" value="${etat.attributs[attr] || 0}"></label>`
+        `<label title="${attr}">${ABREV[attr]} <input type="number" min="0" data-type="attr" data-id="${attr}" value="${etat.attributs[attr] || 0}"></label>`
       ).join("");
 
       rendreBlessures();
 
-      document.getElementById("carrieres").innerHTML = `<table>
-    <tr><th>Carrière</th><th>Rang</th><th>Points à répartir</th></tr>` +
-        CARRIERES.map(c => {
+      document.getElementById("carrieres").innerHTML =
+        `<div class="cartes-carriere">` + CARRIERES.map(c => {
           const rang = etat.carrieres[c.nom] || 0;
           let info;
           if (!c.groupe) {
@@ -633,12 +684,12 @@
               ? `<span class="alerte">dépassement de ${-reste}</span>`
               : `<span class="${reste === 0 ? "ok" : ""}">${reste}</span>`;
           }
-          return `<tr>
-        <td>${c.nom}</td>
-        <td><input type="number" min="0" data-type="carriere" data-id="${c.nom}" value="${rang}"></td>
-        <td>${info}</td>
-      </tr>`;
-        }).join("") + `</table>`;
+          return `<div class="carte">
+        <div class="carte-nom">${c.nom}</div>
+        <label>Rang <input type="number" min="0" data-type="carriere" data-id="${c.nom}" value="${rang}"></label>
+        <div class="resume">Points à répartir : ${info}</div>
+      </div>`;
+        }).join("") + `</div>`;
 
       document.getElementById("specs-contenu").innerHTML = GROUPES.map(g => {
         const carriere = CARRIERES.find(c => c.groupe === g);

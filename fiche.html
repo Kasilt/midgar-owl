@@ -405,6 +405,14 @@
 
     #ajout-nom {
       width: 180px;
+
+
+    }
+
+    .titre-groupe {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
   </style>
 </head>
@@ -576,6 +584,7 @@
     let uiOuvert = null;
     let jetUnique = null;
     let formAjout = null;   // caractéristique dont le formulaire d'ajout est ouvert
+    let formSpec = null;   // groupe dont le formulaire d'ajout de spécialisation est ouvert
 
     function defaut() {
       return { identite: {}, attributs: {}, carrieres: {}, specs: {}, comps: {}, pa: 0, blessures: 0 };
@@ -608,6 +617,24 @@
       await sauver();
       rendre();
     }
+    async function ajouterSpecialisation(groupe, nom, cases, effet) {
+      etat.specPerso = [...(etat.specPerso || []), { id: Date.now().toString(36), groupe, nom, cases, effet }];
+      formSpec = null;
+      await sauver();
+      rendre();
+    }
+
+    function formulaireSpec(groupe) {
+      return `<div class="panneau" style="padding:6px;margin-bottom:6px">
+    <div class="form-ajout">
+      <input type="text" id="ajout-spec-nom" placeholder="Nom de la spécialisation">
+      <label class="resume">Cases <input type="number" id="ajout-spec-cases" min="1" max="8" value="4"></label>
+      <input type="text" id="ajout-spec-effet" placeholder="Effet (ex. +1 Toucher)">
+      <button data-spec-ajout="${esc(groupe)}">Ajouter</button>
+      <button data-spec-ajout-annuler="1">Annuler</button>
+    </div>
+  </div>`;
+    }
 
     function formulaireAjout(attr) {
       return `<tr><td colspan="5" class="panneau">
@@ -622,8 +649,16 @@
   </td></tr>`;
     }
 
-    function specKey(s) { return s.groupe + ":" + s.nom; }
-    function specDe(k) { return SPECS.find(s => specKey(s) === k); }
+    // Liste complète : spécialisations de base puis spécialisations ajoutées
+    function listeSpecs() {
+      const perso = (etat.specPerso || []).map(p => ({
+        key: "p" + p.id, groupe: p.groupe, nom: p.nom, cases: p.cases, effet: p.effet
+      }));
+      return [...SPECS, ...perso];
+    }
+
+    function specKey(s) { return s.key ?? (s.groupe + ":" + s.nom); }
+    function specDe(k) { return listeSpecs().find(s => specKey(s) === k); }
 
     function bonusSpec(s) {
       const points = etat.specs[specKey(s)] || 0;
@@ -633,7 +668,7 @@
     }
 
     function pointsUtilises(groupe) {
-      return SPECS.filter(s => s.groupe === groupe)
+      return listeSpecs().filter(s => s.groupe === groupe)
         .reduce((total, s) => total + (etat.specs[specKey(s)] || 0), 0);
     }
 
@@ -667,19 +702,20 @@
     // ---------- Rendu ----------
 
     function panneauSpecs(i, d) {
-      const cases = SPECS.map(s => {
+      const specs = listeSpecs();
+      const cases = specs.map(s => {
         const k = specKey(s);
         const coche = d.specs.includes(k) ? "checked" : "";
         return `<label style="display:block">
       <input type="checkbox" data-type="compspec" data-comp="${i}" data-key="${esc(k)}" ${coche}>
-      ${s.groupe} — ${s.nom} (+${bonusSpec(s)})
+      ${s.groupe} — ${esc(s.nom)} (+${bonusSpec(s)})
     </label>`;
       }).join("");
 
-      const options = `<option value="">aucune</option>` + SPECS.map(s => {
+      const options = `<option value="">aucune</option>` + specs.map(s => {
         const k = specKey(s);
         const sel = jetUnique && jetUnique.i === i && jetUnique.key === k ? "selected" : "";
-        return `<option value="${esc(k)}" ${sel}>${s.groupe} — ${s.nom}</option>`;
+        return `<option value="${esc(k)}" ${sel}>${s.groupe} — ${esc(s.nom)}</option>`;
       }).join("");
 
       return `<tr><td colspan="5" class="panneau">
@@ -759,19 +795,27 @@
         const reste = rang - utilises;
         const alerte = reste < 0 ? ` <span class="alerte">— dépassement de ${-reste}</span>` : "";
 
-        const lignes = SPECS.filter(s => s.groupe === g).map(s => {
-          const k = specKey(s);
-          const points = etat.specs[k] || 0;
-          const info = s.seuil ? ` (${s.seuil} pts par +1, max +${s.max})` : "";
-          return `<tr>
-        <td>${s.nom}</td>
-        <td><input type="number" min="0" max="${s.cases}" data-type="spec" data-id="${esc(k)}" value="${points}"> / ${s.cases}</td>
-        <td>+${bonusSpec(s)}</td>
-        <td class="resume">${s.effet}</td>
-      </tr>`;
-        }).join("");
+        const lignes = listeSpecs().filter(s => s.groupe === g)
+          .sort((a, b) => a.nom.localeCompare(b.nom, "fr", { sensitivity: "base" }))
+          .map(s => {
+            const k = specKey(s);
+            const points = etat.specs[k] || 0;
+            const info = s.seuil ? ` (${s.seuil} pts par +1, max +${s.max})` : "";
+            return `<tr>
+          <td>${esc(s.nom)}</td>
+          <td><input type="number" min="0" max="${s.cases}" data-type="spec" data-id="${esc(k)}" value="${points}"> / ${s.cases}</td>
+          <td>+${bonusSpec(s)}${info}</td>
+          <td class="resume">${esc(s.effet)}</td>
+        </tr>`;
+          }).join("");
 
-        return `<h3>Spécialisations de ${g}</h3>
+        const formulaire = formSpec === g ? formulaireSpec(g) : "";
+
+        return `<div class="titre-groupe">
+        <h3>Spécialisations de ${g}</h3>
+        <button class="bouton-jet" data-gear-groupe="${g}" title="Ajouter une spécialisation">⚙</button>
+      </div>
+      ${formulaire}
       <div class="resume">Rang ${rang} · points utilisés ${utilises}${alerte}</div>
       <table><tr><th>Spécialisation</th><th>Points</th><th>Bonus</th><th>Effet</th></tr>${lignes}</table>`;
       }).join("");
@@ -814,8 +858,8 @@
         .map(c => `<option value="${c.key}">${c.attr} — ${esc(c.nom)}</option>`).join("");
       selComp.value = ancienComp;
 
-      const optionsSpec = SPECS.filter(s => bonusSpec(s) > 0)
-        .map(s => `<option value="${esc(specKey(s))}">${s.groupe} — ${s.nom} (+${bonusSpec(s)})</option>`)
+      const optionsSpec = listeSpecs().filter(s => bonusSpec(s) > 0)
+        .map(s => `<option value="${esc(specKey(s))}">${s.groupe} — ${esc(s.nom)} (+${bonusSpec(s)})</option>`)
         .join("");
       selSpec.innerHTML = `<option value="">Aucune spécialisation</option>${optionsSpec}`;
       selSpec.value = ancienSpec;
@@ -866,6 +910,7 @@
         uiOuvert = null;
         jetUnique = null;
         formAjout = null;
+        formSpec = null;
         montrer("infos");
         window.scrollTo(0, 0);
       }
@@ -1090,6 +1135,22 @@
         if (!nom) return alert("Indique un libellé pour la compétence.");
         const type = document.getElementById("ajout-type").value;
         return ajouterCompetence(t.dataset.ajout, nom, type);
+      }
+      if (t.dataset.gearGroupe !== undefined) {
+        const g = t.dataset.gearGroupe;
+        formSpec = formSpec === g ? null : g;
+        return rendre();
+      }
+      if (t.dataset.specAjout !== undefined) {
+        const nom = document.getElementById("ajout-spec-nom").value.trim();
+        if (!nom) return alert("Indique un nom pour la spécialisation.");
+        const cases = Math.min(8, Math.max(1, Number(document.getElementById("ajout-spec-cases").value) || 4));
+        const effet = document.getElementById("ajout-spec-effet").value.trim() || "-";
+        return ajouterSpecialisation(t.dataset.specAjout, nom, cases, effet);
+      }
+      if (t.dataset.specAjoutAnnuler !== undefined) {
+        formSpec = null;
+        return rendre();
       }
       if (t.dataset.ajoutAnnuler !== undefined) {
         formAjout = null;

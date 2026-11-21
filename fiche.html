@@ -617,8 +617,10 @@
       await sauver();
       rendre();
     }
-    async function ajouterSpecialisation(groupe, nom, cases, effet) {
-      etat.specPerso = [...(etat.specPerso || []), { id: Date.now().toString(36), groupe, nom, cases, effet }];
+    async function ajouterSpecialisation(groupe, nom, cases, seuil, max, effet) {
+      etat.specPerso = [...(etat.specPerso || []), {
+        id: Date.now().toString(36), groupe, nom, cases, seuil, max, effet
+      }];
       formSpec = null;
       await sauver();
       rendre();
@@ -629,6 +631,8 @@
     <div class="form-ajout">
       <input type="text" id="ajout-spec-nom" placeholder="Nom de la spécialisation">
       <label class="resume">Cases <input type="number" id="ajout-spec-cases" min="1" max="8" value="4"></label>
+      <label class="resume">Seuil <input type="number" id="ajout-spec-seuil" min="1" value="1"></label>
+      <label class="resume">Max <input type="number" id="ajout-spec-max" min="1" placeholder="= cases"></label>
       <input type="text" id="ajout-spec-effet" placeholder="Effet (ex. +1 Toucher)">
       <button data-spec-ajout="${esc(groupe)}">Ajouter</button>
       <button data-spec-ajout-annuler="1">Annuler</button>
@@ -652,7 +656,8 @@
     // Liste complète : spécialisations de base puis spécialisations ajoutées
     function listeSpecs() {
       const perso = (etat.specPerso || []).map(p => ({
-        key: "p" + p.id, groupe: p.groupe, nom: p.nom, cases: p.cases, effet: p.effet
+        key: "p" + p.id, groupe: p.groupe, nom: p.nom, cases: p.cases,
+        seuil: p.seuil, max: p.max, effet: p.effet
       }));
       return [...SPECS, ...perso];
     }
@@ -800,7 +805,9 @@
           .map(s => {
             const k = specKey(s);
             const points = etat.specs[k] || 0;
-            const info = s.seuil ? ` (${s.seuil} pts par +1, max +${s.max})` : "";
+            const info = (s.seuil > 1 || s.max)
+              ? ` (${s.seuil || 1} pts par +1, max +${s.max ?? s.cases})`
+              : "";
             return `<tr>
           <td>${esc(s.nom)}</td>
           <td><input type="number" min="0" max="${s.cases}" data-type="spec" data-id="${esc(k)}" value="${points}"> / ${s.cases}</td>
@@ -1145,8 +1152,11 @@
         const nom = document.getElementById("ajout-spec-nom").value.trim();
         if (!nom) return alert("Indique un nom pour la spécialisation.");
         const cases = Math.min(8, Math.max(1, Number(document.getElementById("ajout-spec-cases").value) || 4));
+        const seuil = Math.max(1, Number(document.getElementById("ajout-spec-seuil").value) || 1);
+        const maxSaisi = Number(document.getElementById("ajout-spec-max").value);
+        const max = maxSaisi > 0 ? maxSaisi : null;
         const effet = document.getElementById("ajout-spec-effet").value.trim() || "-";
-        return ajouterSpecialisation(t.dataset.specAjout, nom, cases, effet);
+        return ajouterSpecialisation(t.dataset.specAjout, nom, cases, seuil, max, effet);
       }
       if (t.dataset.specAjoutAnnuler !== undefined) {
         formSpec = null;

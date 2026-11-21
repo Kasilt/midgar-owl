@@ -25,7 +25,6 @@
     td, th { border-bottom: 1px solid #ddd; padding: 3px 4px; text-align: left; vertical-align: middle; }
     th { font-size: 12px; color: #555; }
     tr.attr-titre td { background: #e6e6e6; font-weight: bold; padding-top: 6px; }
-    .carriere { margin-bottom: 6px; }
     .resume { font-size: 12px; color: #555; }
     .alerte { color: #b00020; font-weight: bold; }
     .ok { color: #2e7d32; font-weight: bold; }
@@ -35,12 +34,17 @@
     #jet .titre-jet { font-size: 15px; }
     #jet .detail { font-size: 12px; color: #555; }
     .bouton-jet { font-size: 12px; }
-   #carrieres table { width: auto; }
-   #carrieres td, #carrieres th { padding: 4px 12px 4px 0; }
-    .cases-blessure { display: grid; grid-template-columns: repeat(4, minmax(28px, 1fr)); gap: 4px; }
-    .cases-blessure label { display: flex; align-items: center; gap: 2px; }
-    .groupe-blessure { margin: 6px 0; padding: 4px; border: 1px solid #ddd; background: #fff; }
-    .groupe-blessure h3 { margin: 0 0 4px; }
+    #carrieres table { width: auto; }
+    #carrieres td, #carrieres th { padding: 4px 12px 4px 0; }
+
+    /* Piste de blessures : 2 lignes de 5 groupes, 4 cases par groupe */
+    .rangee { display: flex; gap: 6px; margin-bottom: 6px; }
+    .groupe { flex: 1; border: 1px solid #ccc; border-radius: 4px; padding: 3px; background: #fff; min-width: 0; }
+    .groupe.mortelle { border-color: #b00020; }
+    .gtitre { font-size: 11px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .gtitre span { color: #b00020; }
+    .cases { display: flex; gap: 2px; margin-top: 2px; }
+    .cases input { margin: 0; }
   </style>
 </head>
 <body>
@@ -62,7 +66,6 @@
     <button data-onglet="comps">Compétences</button>
     <button data-onglet="specs">Spécialisations</button>
     <button data-onglet="jets">Jets</button>
-    <button data-onglet="combat">Combat</button>
   </nav>
 
   <section id="infos" class="onglet actif">
@@ -70,6 +73,8 @@
     <div class="grille" id="identite"></div>
     <h2>Caractéristiques</h2>
     <div class="grille" id="attributs"></div>
+    <h2>Blessures</h2>
+    <div id="blessures"></div>
     <h2>Carrières</h2>
     <div id="carrieres"></div>
   </section>
@@ -96,25 +101,6 @@
     <p><button id="btn-embuscade">Se cacher / Semer</button></p>
   </section>
 
-  <section id="combat" class="onglet">
-    <h2>Blessures</h2>
-    <p id="resume-blessures" class="resume"></p>
-    <div id="table-blessures"></div>
-
-    <h2>Armure par localisation</h2>
-    <table id="armures"></table>
-
-    <h2>Enregistrer des dégâts</h2>
-    <p>
-      <label>Dégâts reçus <input id="degats-entree" type="number" min="1" step="1" value="1"></label>
-      <label>Localisation
-        <select id="degats-zone"></select>
-      </label>
-      <button id="btn-appliquer-degats">Appliquer</button>
-    </p>
-    <p><button id="btn-retirer-degat">Retirer 1 dégât</button></p>
-  </section>
-
   <div id="jet"><span class="detail">Aucun jet pour l'instant.</span></div>
 
   <p><button id="btn-recharger">Recharger la fiche</button></p>
@@ -126,19 +112,6 @@ import OBR from "https://esm.sh/@owlbear-rodeo/sdk@3";
 const CLE = "fr.midgar.fiche";
 const CLE_DERNIER = "midgar-dernier-token";
 const FACTEUR = { "o": 1, "/": 2, "": 3 };
-const ZONES = ["Tête", "Torse", "Bras gauche", "Bras droit", "Jambe gauche", "Jambe droite"];
-const NIVEAUX_BLESSURE = [
-  { nom: "Légère", malus: 0 },
-  { nom: "Moyenne", malus: -1 },
-  { nom: "Sérieuse", malus: -2 },
-  { nom: "Critique", malus: -3 },
-  { nom: "Handicap", malus: -4 },
-  { nom: "Invalidité", malus: -5 },
-  { nom: "Mortelle", malus: -6 },
-  { nom: "Mortelle (1)", malus: -7 },
-  { nom: "Mortelle (2)", malus: -8 },
-  { nom: "Mortelle (3)", malus: -9 }
-];
 
 const IDENTITE = [
   ["nom", "Nom"], ["age", "Âge"], ["taille_p", "Taille"], ["poids", "Poids"],
@@ -225,15 +198,24 @@ const SPECS = [
   { groupe: "Voleur", nom: "Prestidigitation", cases: 1, effet: "-" }
 ];
 
+// 10 groupes de 4 cases (40 au total). L'effet vaut -g pour le groupe d'indice g.
+// cons : modificateur du jet de Constitution exigé pour les groupes Mortelle (indices 6 à 9).
+const BLESSURES = [
+  { nom: "Légère" }, { nom: "Moyenne" }, { nom: "Sérieuse" }, { nom: "Critique" },
+  { nom: "Handicap" }, { nom: "Invalidité" },
+  { nom: "Mortelle", cons: 0 }, { nom: "Mortelle (1)", cons: -1 },
+  { nom: "Mortelle (2)", cons: -2 }, { nom: "Mortelle (3)", cons: -3 }
+];
+
 // ---------- État ----------
 
 let tokenId = null;
 let etat = defaut();
-let uiOuvert = null;   // compétence dont le panneau ⚙ est ouvert (non sauvegardé)
-let jetUnique = null;  // spécialisation ajoutée au prochain jet seulement (non sauvegardée)
+let uiOuvert = null;
+let jetUnique = null;
 
 function defaut() {
-  return { identite: {}, attributs: {}, carrieres: {}, specs: {}, comps: {}, pa: 0, blessures: 0, armures: {} };
+  return { identite: {}, attributs: {}, carrieres: {}, specs: {}, comps: {}, pa: 0, blessures: 0 };
 }
 
 function niveauComp(i) {
@@ -251,16 +233,6 @@ function bonusSpec(s) {
   return Math.min(Math.floor(points / seuil), max);
 }
 
-function niveauBlessure() {
-  const degats = Math.max(0, etat.blessures);
-  const index = Math.min(degats === 0 ? 0 : Math.floor((degats - 1) / 4), NIVEAUX_BLESSURE.length - 1);
-  return NIVEAUX_BLESSURE[index];
-}
-
-function malusBlessure() {
-  return niveauBlessure().malus;
-}
-
 function pointsUtilises(groupe) {
   return SPECS.filter(s => s.groupe === groupe)
     .reduce((total, s) => total + (etat.specs[specKey(s)] || 0), 0);
@@ -272,6 +244,12 @@ function coutProchainNiveau(comp) {
     return { cout: 3 * facteur, accordMJ: true };
   }
   return { cout: (comp.niveau + 1) * facteur, accordMJ: false };
+}
+
+// Pénalité aux jets de compétence selon le nombre de cases cochées
+function penaliteBlessures() {
+  const n = etat.blessures || 0;
+  return n === 0 ? 0 : -Math.floor((n - 1) / 4);
 }
 
 function esc(texte) {
@@ -312,6 +290,28 @@ function panneauSpecs(i, d) {
   </td></tr>`;
 }
 
+function rendreBlessures() {
+  const n = etat.blessures || 0;
+  let html = "";
+  for (let rangee = 0; rangee < 2; rangee++) {
+    html += `<div class="rangee">`;
+    for (let g = rangee * 5; g < rangee * 5 + 5; g++) {
+      const b = BLESSURES[g];
+      html += `<div class="groupe${g >= 6 ? " mortelle" : ""}">
+        <div class="gtitre">${b.nom} <span>${-g}</span></div>
+        <div class="cases">`;
+      for (let k = 1; k <= 4; k++) {
+        const num = 4 * g + k;
+        html += `<input type="checkbox" data-type="blessure" data-id="${num}" ${num <= n ? "checked" : ""}>`;
+      }
+      html += `</div></div>`;
+    }
+    html += `</div>`;
+  }
+  html += `<p class="resume">Blessures : ${n} / 40 · pénalité aux jets de compétence : ${penaliteBlessures()}</p>`;
+  document.getElementById("blessures").innerHTML = html;
+}
+
 function rendre() {
   const selComp = document.getElementById("sel-comp");
   const selSpec = document.getElementById("sel-spec");
@@ -324,13 +324,13 @@ function rendre() {
 
   document.querySelector('[data-type="pa"]').value = etat.pa;
 
-  rendreCombat();
-
   document.getElementById("attributs").innerHTML = ATTRIBUTS.map(attr =>
     `<label>${attr} <input type="number" min="0" data-type="attr" data-id="${attr}" value="${etat.attributs[attr] || 0}"></label>`
   ).join("");
 
-    document.getElementById("carrieres").innerHTML = `<table>
+  rendreBlessures();
+
+  document.getElementById("carrieres").innerHTML = `<table>
     <tr><th>Carrière</th><th>Rang</th><th>Points à répartir</th></tr>` +
     CARRIERES.map(c => {
       const rang = etat.carrieres[c.nom] || 0;
@@ -410,35 +410,6 @@ function rendre() {
   selSpec.value = ancienSpec;
 }
 
-function rendreCombat() {
-  const niveau = niveauBlessure();
-  const casesRemplies = Math.min(etat.blessures, NIVEAUX_BLESSURE.length * 4);
-  const surplus = Math.max(0, etat.blessures - NIVEAUX_BLESSURE.length * 4);
-  document.getElementById("resume-blessures").textContent =
-    `${etat.blessures} dégât(s) enregistré(s) · ${niveau.nom} (${niveau.malus})` +
-    (surplus ? ` · ${surplus} au-delà des 40 cases` : "");
-
-  document.getElementById("table-blessures").innerHTML = NIVEAUX_BLESSURE.map((groupe, index) => {
-    const cases = Array.from({ length: 4 }, (_, caseIndex) => {
-      const numero = index * 4 + caseIndex;
-      const coche = numero < casesRemplies ? "checked" : "";
-      return `<label><input type="checkbox" disabled ${coche} aria-label="${groupe.nom}, case ${caseIndex + 1}"></label>`;
-    }).join("");
-    const cible = index === 6 ? "Constitution" : `Constitution -${index - 6}`;
-    const test = index >= 6 ? ` · survie : 1d10 < ${cible}` : "";
-    return `<div class="groupe-blessure">
-      <h3>${groupe.nom} — ${groupe.malus}${test}</h3>
-      <div class="cases-blessure">${cases}</div>
-    </div>`;
-  }).join("");
-
-  document.getElementById("armures").innerHTML =
-    `<tr><th>Localisation</th><th>Protection</th></tr>` +
-    ZONES.map(zone => `<tr><td>${zone}</td><td><input type="number" min="0" step="1" data-type="armure" data-id="${zone}" value="${etat.armures[zone] || 0}"></td></tr>`).join("");
-  document.getElementById("degats-zone").innerHTML =
-    ZONES.map(zone => `<option value="${zone}">${zone}</option>`).join("");
-}
-
 // ---------- Sauvegarde et chargement ----------
 
 async function sauver() {
@@ -479,13 +450,7 @@ async function charger() {
     return;
   }
 
-  const donnees = item.metadata[CLE] ?? {};
-  etat = {
-    ...defaut(),
-    ...donnees,
-    blessures: Math.max(0, Math.floor(Number(donnees.blessures) || 0)),
-    armures: { ...defaut().armures, ...(donnees.armures ?? {}) }
-  };
+  etat = { ...defaut(), ...(item.metadata[CLE] ?? {}) };
   statut.hidden = true;
   fiche.hidden = false;
   rendre();
@@ -500,10 +465,20 @@ async function onChange(e) {
   const id = t.dataset.id;
   const v = t.value;
 
-  // Choix « pour ce jet uniquement » : pas de sauvegarde ni de rendu
   if (type === "jetunique") {
     const i = Number(t.dataset.comp);
     jetUnique = v ? { i, key: v } : null;
+    return;
+  }
+
+  if (type === "blessure") {
+    const n = Number(id);
+    const ancien = etat.blessures || 0;
+    const nouveau = t.checked ? n : n - 1;
+    etat.blessures = nouveau;
+    await sauver();
+    if (nouveau > ancien) verifierEntrees(ancien, nouveau);
+    rendre();
     return;
   }
 
@@ -529,8 +504,6 @@ async function onChange(e) {
     etat.comps[i] = { ...d, specs: liste };
   } else if (type === "pa") {
     etat.pa = Math.max(0, Number(v) || 0);
-  } else if (type === "armure") {
-    etat.armures[id] = Math.max(0, Math.floor(Number(v) || 0));
   }
 
   await sauver();
@@ -551,6 +524,28 @@ async function acheter(i) {
   etat.comps[i] = { ...c, niveau: c.niveau + 1 };
   await sauver();
   rendre();
+}
+
+// ---------- Blessures : jets de survie ----------
+
+// Quand une case d'un groupe Mortelle est atteinte pour la première fois, on demande un jet de Constitution
+function verifierEntrees(ancien, nouveau) {
+  const lignes = [];
+  const con = etat.attributs["Constitution"] || 0;
+
+  for (let g = 0; g < BLESSURES.length; g++) {
+    const debut = 4 * g + 1;
+    if (g < 6 || ancien >= debut || nouveau < debut) continue;
+
+    const b = BLESSURES[g];
+    const cible = con + b.cons;
+    const d = 1 + Math.floor(Math.random() * 10);
+    lignes.push(`${b.nom} : dé ${d} · cible ${cible} (Constitution ${con}${b.cons ? " " + b.cons : ""})`);
+  }
+
+  if (lignes.length) {
+    afficher("Jet de Constitution (1d10 sous la cible)", [], lignes);
+  }
 }
 
 // ---------- Calcul des jets ----------
@@ -575,21 +570,20 @@ function calculerJet(i, clesSpec = []) {
   const bonusAttr = demi ? Math.floor(attr / 2) : attr;
   const specs = [...new Set(clesSpec)].map(specDe).filter(Boolean);
   const bonusS = specs.reduce((somme, s) => somme + bonusSpec(s), 0);
-  const malus = malusBlessure();
+  const pen = penaliteBlessures();
   const { jets, somme } = jetDes(!demi);
 
   return {
     comp, jets, des: somme, bonusAttr, demi,
-    niveau: c.niveau, specs, bonusS,
-    malus,
-    total: somme + bonusAttr + c.niveau + bonusS + malus
+    niveau: c.niveau, specs, bonusS, pen,
+    total: somme + bonusAttr + c.niveau + bonusS + pen
   };
 }
 
 function afficher(titre, detail, lignes = []) {
   document.getElementById("jet").innerHTML =
     `<div class="titre-jet">${esc(titre)}</div>` +
-    `<div class="detail">${detail.map(esc).join(" · ")}</div>` +
+    (detail.length ? `<div class="detail">${detail.map(esc).join(" · ")}</div>` : "") +
     lignes.map(l => `<div class="detail">${esc(l)}</div>`).join("");
 }
 
@@ -600,7 +594,7 @@ function detailJet(r) {
     `compétence ${r.niveau}`
   ];
   for (const s of r.specs) parties.push(`${s.nom} +${bonusSpec(s)}`);
-  if (r.malus) parties.push(`blessures ${r.malus}`);
+  if (r.pen) parties.push(`blessures ${r.pen}`);
   return parties;
 }
 
@@ -614,7 +608,6 @@ function lancer(i, clesSpec = []) {
 
 // ---------- Initiative et embuscade ----------
 
-// Rangs d'action : le score, puis tous les 10 points en dessous, tant que le rang est positif
 function rangsAction(score) {
   const rangs = [];
   let r = score;
@@ -627,7 +620,7 @@ function rangsAction(score) {
 
 function lancerInitiative() {
   const agi = etat.attributs["Agilité"] || 0;
-  const { jets, somme } = jetDes(true);   // un 10 explose
+  const { jets, somme } = jetDes(true);
   const score = agi + somme;
   const rangs = rangsAction(score);
 
@@ -651,62 +644,12 @@ function lancerEmbuscade() {
   ]);
 }
 
-function lancerTestSurvie(index) {
-  const rang = index - 6;
-  const constitution = etat.attributs["Constitution"] || 0;
-  const cible = constitution - rang;
-  const de = 1 + Math.floor(Math.random() * 10);
-  const reussite = de < cible;
-  const nom = NIVEAUX_BLESSURE[index].nom;
-  return `${nom} : Constitution ${cible}, 1d10 = ${de} — ${reussite ? "survie réussie" : "survie échouée"}`;
-}
-
-async function appliquerDegats() {
-  const input = document.getElementById("degats-entree");
-  const degats = Number(input.value);
-  if (!Number.isInteger(degats) || degats < 1) {
-    alert("Saisis un nombre entier de dégâts supérieur à zéro.");
-    return;
-  }
-
-  const zone = document.getElementById("degats-zone").value;
-  const protection = Math.max(0, Math.floor(Number(etat.armures[zone]) || 0));
-  const absorbes = Math.min(degats, protection);
-  const recus = degats - absorbes;
-  const avant = etat.blessures;
-  etat.blessures += recus;
-
-  const lignes = [
-    `${degats} dégât(s) à ${zone}`,
-    `armure ${protection} : ${absorbes} absorbé(s)`,
-    `${recus} dégât(s) enregistré(s)`
-  ];
-  for (let point = avant; point < etat.blessures && point < 40; point++) {
-    const indexGroupe = Math.floor(point / 4);
-    if (indexGroupe >= 6 && point % 4 === 0) {
-      lignes.push(lancerTestSurvie(indexGroupe));
-    }
-  }
-  if (etat.blessures > 40) lignes.push(`${etat.blessures - 40} dégât(s) au-delà de la piste`);
-
-  await sauver();
-  rendre();
-  afficher("Dégâts enregistrés", lignes);
-}
-
-async function retirerDegat() {
-  if (etat.blessures === 0) return;
-  etat.blessures -= 1;
-  await sauver();
-  rendre();
-}
+// ---------- Événements ----------
 
 function onClick(e) {
   const t = e.target;
   if (t.id === "btn-initiative") return lancerInitiative();
   if (t.id === "btn-embuscade") return lancerEmbuscade();
-  if (t.id === "btn-appliquer-degats") return appliquerDegats();
-  if (t.id === "btn-retirer-degat") return retirerDegat();
   if (t.dataset.onglet) return montrer(t.dataset.onglet);
 
   if (t.dataset.gear !== undefined) {

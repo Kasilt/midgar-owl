@@ -382,6 +382,19 @@
     .carte input[type=number] {
       width: 50px;
     }
+
+    /* Masque les flèches des champs numériques (Chrome, Edge, Safari, Android) */
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    /* Firefox */
+    input[type=number] {
+      -moz-appearance: textfield;
+      appearance: textfield;
+    }
   </style>
 </head>
 
@@ -766,7 +779,7 @@
       }
     }
 
-    async function charger() {
+    async function charger(nouveauToken = false) {
       const statut = document.getElementById("statut");
       const fiche = document.getElementById("fiche");
       const entete = document.getElementById("entete");
@@ -789,6 +802,14 @@
         statut.hidden = false;
         fiche.hidden = true;
         return;
+      }
+
+      // Nouveau token : on repart de l'onglet Infos, sans sous-menu ouvert
+      if (nouveauToken) {
+        uiOuvert = null;
+        jetUnique = null;
+        montrer("infos");
+        window.scrollTo(0, 0);
       }
 
       etat = { ...defaut(), ...(item.metadata[CLE] ?? {}) };
@@ -1029,7 +1050,7 @@
         if (!id || id === tokenId) return;
         tokenId = id;
         localStorage.setItem(CLE_DERNIER, id);
-        await charger();
+        await charger(true);
       });
 
       const selection = await OBR.player.getSelection();
@@ -1039,7 +1060,7 @@
       } else {
         tokenId = localStorage.getItem(CLE_DERNIER);
       }
-      await charger();
+      await charger(true);
     });
   </script>
 

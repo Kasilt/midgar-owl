@@ -37,6 +37,10 @@
     .bouton-jet { font-size: 12px; }
    #carrieres table { width: auto; }
    #carrieres td, #carrieres th { padding: 4px 12px 4px 0; }
+    .cases-blessure { display: grid; grid-template-columns: repeat(4, minmax(28px, 1fr)); gap: 4px; }
+    .cases-blessure label { display: flex; align-items: center; gap: 2px; }
+    .groupe-blessure { margin: 6px 0; padding: 4px; border: 1px solid #ddd; background: #fff; }
+    .groupe-blessure h3 { margin: 0 0 4px; }
   </style>
 </head>
 <body>
@@ -58,6 +62,7 @@
     <button data-onglet="comps">Compétences</button>
     <button data-onglet="specs">Spécialisations</button>
     <button data-onglet="jets">Jets</button>
+    <button data-onglet="combat">Combat</button>
   </nav>
 
   <section id="infos" class="onglet actif">
@@ -91,6 +96,25 @@
     <p><button id="btn-embuscade">Se cacher / Semer</button></p>
   </section>
 
+  <section id="combat" class="onglet">
+    <h2>Blessures</h2>
+    <p id="resume-blessures" class="resume"></p>
+    <div id="table-blessures"></div>
+
+    <h2>Armure par localisation</h2>
+    <table id="armures"></table>
+
+    <h2>Enregistrer des dégâts</h2>
+    <p>
+      <label>Dégâts reçus <input id="degats-entree" type="number" min="1" step="1" value="1"></label>
+      <label>Localisation
+        <select id="degats-zone"></select>
+      </label>
+      <button id="btn-appliquer-degats">Appliquer</button>
+    </p>
+    <p><button id="btn-retirer-degat">Retirer 1 dégât</button></p>
+  </section>
+
   <div id="jet"><span class="detail">Aucun jet pour l'instant.</span></div>
 
   <p><button id="btn-recharger">Recharger la fiche</button></p>
@@ -102,6 +126,19 @@ import OBR from "https://esm.sh/@owlbear-rodeo/sdk@3";
 const CLE = "fr.midgar.fiche";
 const CLE_DERNIER = "midgar-dernier-token";
 const FACTEUR = { "o": 1, "/": 2, "": 3 };
+const ZONES = ["Tête", "Torse", "Bras gauche", "Bras droit", "Jambe gauche", "Jambe droite"];
+const NIVEAUX_BLESSURE = [
+  { nom: "Légère", malus: 0 },
+  { nom: "Moyenne", malus: -1 },
+  { nom: "Sérieuse", malus: -2 },
+  { nom: "Critique", malus: -3 },
+  { nom: "Handicap", malus: -4 },
+  { nom: "Invalidité", malus: -5 },
+  { nom: "Mortelle", malus: -6 },
+  { nom: "Mortelle (1)", malus: -7 },
+  { nom: "Mortelle (2)", malus: -8 },
+  { nom: "Mortelle (3)", malus: -9 }
+];
 
 const IDENTITE = [
   ["nom", "Nom"], ["age", "Âge"], ["taille_p", "Taille"], ["poids", "Poids"],
@@ -196,7 +233,7 @@ let uiOuvert = null;   // compétence dont le panneau ⚙ est ouvert (non sauveg
 let jetUnique = null;  // spécialisation ajoutée au prochain jet seulement (non sauvegardée)
 
 function defaut() {
-  return { identite: {}, attributs: {}, carrieres: {}, specs: {}, comps: {}, pa: 0 };
+  return { identite: {}, attributs: {}, carrieres: {}, specs: {}, comps: {}, pa: 0, blessures: 0, armures: {} };
 }
 
 function niveauComp(i) {
@@ -212,6 +249,16 @@ function bonusSpec(s) {
   const seuil = s.seuil || 1;
   const max = s.max ?? s.cases;
   return Math.min(Math.floor(points / seuil), max);
+}
+
+function niveauBlessure() {
+  const degats = Math.max(0, etat.blessures);
+  const index = Math.min(degats === 0 ? 0 : Math.floor((degats - 1) / 4), NIVEAUX_BLESSURE.length - 1);
+  return NIVEAUX_BLESSURE[index];
+}
+
+function malusBlessure() {
+  return niveauBlessure().malus;
 }
 
 function pointsUtilises(groupe) {
@@ -276,6 +323,8 @@ function rendre() {
   ).join("");
 
   document.querySelector('[data-type="pa"]').value = etat.pa;
+
+  rendreCombat();
 
   document.getElementById("attributs").innerHTML = ATTRIBUTS.map(attr =>
     `<label>${attr} <input type="number" min="0" data-type="attr" data-id="${attr}" value="${etat.attributs[attr] || 0}"></label>`
@@ -361,6 +410,35 @@ function rendre() {
   selSpec.value = ancienSpec;
 }
 
+function rendreCombat() {
+  const niveau = niveauBlessure();
+  const casesRemplies = Math.min(etat.blessures, NIVEAUX_BLESSURE.length * 4);
+  const surplus = Math.max(0, etat.blessures - NIVEAUX_BLESSURE.length * 4);
+  document.getElementById("resume-blessures").textContent =
+    `${etat.blessures} dégât(s) enregistré(s) · ${niveau.nom} (${niveau.malus})` +
+    (surplus ? ` · ${surplus} au-delà des 40 cases` : "");
+
+  document.getElementById("table-blessures").innerHTML = NIVEAUX_BLESSURE.map((groupe, index) => {
+    const cases = Array.from({ length: 4 }, (_, caseIndex) => {
+      const numero = index * 4 + caseIndex;
+      const coche = numero < casesRemplies ? "checked" : "";
+      return `<label><input type="checkbox" disabled ${coche} aria-label="${groupe.nom}, case ${caseIndex + 1}"></label>`;
+    }).join("");
+    const cible = index === 6 ? "Constitution" : `Constitution -${index - 6}`;
+    const test = index >= 6 ? ` · survie : 1d10 < ${cible}` : "";
+    return `<div class="groupe-blessure">
+      <h3>${groupe.nom} — ${groupe.malus}${test}</h3>
+      <div class="cases-blessure">${cases}</div>
+    </div>`;
+  }).join("");
+
+  document.getElementById("armures").innerHTML =
+    `<tr><th>Localisation</th><th>Protection</th></tr>` +
+    ZONES.map(zone => `<tr><td>${zone}</td><td><input type="number" min="0" step="1" data-type="armure" data-id="${zone}" value="${etat.armures[zone] || 0}"></td></tr>`).join("");
+  document.getElementById("degats-zone").innerHTML =
+    ZONES.map(zone => `<option value="${zone}">${zone}</option>`).join("");
+}
+
 // ---------- Sauvegarde et chargement ----------
 
 async function sauver() {
@@ -401,7 +479,13 @@ async function charger() {
     return;
   }
 
-  etat = { ...defaut(), ...(item.metadata[CLE] ?? {}) };
+  const donnees = item.metadata[CLE] ?? {};
+  etat = {
+    ...defaut(),
+    ...donnees,
+    blessures: Math.max(0, Math.floor(Number(donnees.blessures) || 0)),
+    armures: { ...defaut().armures, ...(donnees.armures ?? {}) }
+  };
   statut.hidden = true;
   fiche.hidden = false;
   rendre();
@@ -445,6 +529,8 @@ async function onChange(e) {
     etat.comps[i] = { ...d, specs: liste };
   } else if (type === "pa") {
     etat.pa = Math.max(0, Number(v) || 0);
+  } else if (type === "armure") {
+    etat.armures[id] = Math.max(0, Math.floor(Number(v) || 0));
   }
 
   await sauver();
@@ -489,12 +575,14 @@ function calculerJet(i, clesSpec = []) {
   const bonusAttr = demi ? Math.floor(attr / 2) : attr;
   const specs = [...new Set(clesSpec)].map(specDe).filter(Boolean);
   const bonusS = specs.reduce((somme, s) => somme + bonusSpec(s), 0);
+  const malus = malusBlessure();
   const { jets, somme } = jetDes(!demi);
 
   return {
     comp, jets, des: somme, bonusAttr, demi,
     niveau: c.niveau, specs, bonusS,
-    total: somme + bonusAttr + c.niveau + bonusS
+    malus,
+    total: somme + bonusAttr + c.niveau + bonusS + malus
   };
 }
 
@@ -512,6 +600,7 @@ function detailJet(r) {
     `compétence ${r.niveau}`
   ];
   for (const s of r.specs) parties.push(`${s.nom} +${bonusSpec(s)}`);
+  if (r.malus) parties.push(`blessures ${r.malus}`);
   return parties;
 }
 
@@ -562,12 +651,62 @@ function lancerEmbuscade() {
   ]);
 }
 
- 
+function lancerTestSurvie(index) {
+  const rang = index - 6;
+  const constitution = etat.attributs["Constitution"] || 0;
+  const cible = constitution - rang;
+  const de = 1 + Math.floor(Math.random() * 10);
+  const reussite = de < cible;
+  const nom = NIVEAUX_BLESSURE[index].nom;
+  return `${nom} : Constitution ${cible}, 1d10 = ${de} — ${reussite ? "survie réussie" : "survie échouée"}`;
+}
+
+async function appliquerDegats() {
+  const input = document.getElementById("degats-entree");
+  const degats = Number(input.value);
+  if (!Number.isInteger(degats) || degats < 1) {
+    alert("Saisis un nombre entier de dégâts supérieur à zéro.");
+    return;
+  }
+
+  const zone = document.getElementById("degats-zone").value;
+  const protection = Math.max(0, Math.floor(Number(etat.armures[zone]) || 0));
+  const absorbes = Math.min(degats, protection);
+  const recus = degats - absorbes;
+  const avant = etat.blessures;
+  etat.blessures += recus;
+
+  const lignes = [
+    `${degats} dégât(s) à ${zone}`,
+    `armure ${protection} : ${absorbes} absorbé(s)`,
+    `${recus} dégât(s) enregistré(s)`
+  ];
+  for (let point = avant; point < etat.blessures && point < 40; point++) {
+    const indexGroupe = Math.floor(point / 4);
+    if (indexGroupe >= 6 && point % 4 === 0) {
+      lignes.push(lancerTestSurvie(indexGroupe));
+    }
+  }
+  if (etat.blessures > 40) lignes.push(`${etat.blessures - 40} dégât(s) au-delà de la piste`);
+
+  await sauver();
+  rendre();
+  afficher("Dégâts enregistrés", lignes);
+}
+
+async function retirerDegat() {
+  if (etat.blessures === 0) return;
+  etat.blessures -= 1;
+  await sauver();
+  rendre();
+}
 
 function onClick(e) {
   const t = e.target;
   if (t.id === "btn-initiative") return lancerInitiative();
   if (t.id === "btn-embuscade") return lancerEmbuscade();
+  if (t.id === "btn-appliquer-degats") return appliquerDegats();
+  if (t.id === "btn-retirer-degat") return retirerDegat();
   if (t.dataset.onglet) return montrer(t.dataset.onglet);
 
   if (t.dataset.gear !== undefined) {

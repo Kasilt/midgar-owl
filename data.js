@@ -114,3 +114,13 @@ export const BLESSURES = [
   { nom: "Mortelle", cons: 0 }, { nom: "Mortelle (1)", cons: -1 },
   { nom: "Mortelle (2)", cons: -2 }, { nom: "Mortelle (3)", cons: -3 }
 ];
+
+// Zones du corps pour les armures
+export const ZONES = [
+  { cle: "tete", nom: "Tête" },
+  { cle: "torse", nom: "Torse" },
+  { cle: "bras_d", nom: "Bras Droit", abrev: "Bras D" },
+  { cle: "bras_g", nom: "Bras Gauche", abrev: "Bras G" },
+  { cle: "jambe_d", nom: "Jambe Droite", abrev: "Jambe D" },
+  { cle: "jambe_g", nom: "Jambe Gauche", abrev: "Jambe G" }
+];

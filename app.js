@@ -1,5 +1,5 @@
 import OBR from "https://esm.sh/@owlbear-rodeo/sdk@3";
-import { FACTEUR, IDENTITE, ATTRIBUTS, ABREV, COMPS, GROUPES, CARRIERES, SPECS, BLESSURES } from "./data.js";
+import { FACTEUR, IDENTITE, ATTRIBUTS, ABREV, COMPS, GROUPES, CARRIERES, SPECS, BLESSURES, ZONES } from "./data.js";
 
 const CLE = "fr.midgar.fiche";
 const CLE_DERNIER = "midgar-dernier-token";
@@ -30,7 +30,8 @@ function viderBrouillon() {
 function defaut() {
   return {
     identite: {}, attributs: {}, carrieres: {}, specs: {}, comps: {},
-    perso: [], specPerso: [], pa: 0, blessures: 0, maj: 0
+    perso: [], specPerso: [], armure: {}, armes: [],
+    pa: 0, blessures: 0, maj: 0
   };
 }
 
@@ -46,12 +47,26 @@ function trier(a, b) {
   return a.nom.localeCompare(b.nom, "fr", { sensitivity: "base" });
 }
 
-// Clé unique : la base suffixée " #2", " #3"… si elle existe déjà
 function genererCle(base, existantes) {
   if (!existantes.has(base)) return base;
   let n = 2;
   while (existantes.has(`${base} #${n}`)) n++;
   return `${base} #${n}`;
+}
+
+function genId() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+
+function valeurDe(id) {
+  return document.getElementById(id)?.value ?? "";
+}
+
+// Nombre entier borné, ou null si le champ est vide
+function nombreOuNull(v, min = -999, max = 99999) {
+  if (v === "" || v == null) return null;
+  const n = Math.trunc(Number(v));
+  return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : null;
 }
 
 function montrer(nom) {
@@ -307,9 +322,72 @@ function rendreSelects() {
   selSpec.value = vs;
 }
 
+// ---------- Combat : armures ----------
+
+function rendreArmures() {
+  return `<div class="cartes-carriere">` + ZONES.map(z => {
+    const a = etat.armure[z.cle] || { val: 0, etoile: false, desc: "" };
+    const k = esc(z.cle);
+    return `<div class="carte">
+      <div class="carte-nom">${esc(z.nom)}</div>
+      <label>Protection <input type="number" min="0" data-type="armure" data-zone="${k}" data-champ="val" value="${a.val}"></label>
+      <label>Propriété spéciale (*) <input type="checkbox" data-type="armure" data-zone="${k}" data-champ="etoile" ${a.etoile ? "checked" : ""}></label>
+      <input type="text" class="champ-large" data-type="armure" data-zone="${k}" data-champ="desc" placeholder="Pièce d'armure (ex. gambison)" value="${esc(a.desc)}">
+    </div>`;
+  }).join("") + `</div>`;
+}
+
+// ---------- Combat : armes ----------
+
+function carteArme(a) {
+  const k = esc(a.id);
+  const champNum = (champ, libelle, val, min) =>
+    `<label>${libelle} <input type="number" ${min !== undefined ? `min="${min}"` : ""} data-type="arme" data-id="${k}" data-champ="${champ}" value="${val ?? ""}"></label>`;
+
+  return `<div class="carte">
+    <div class="ligne-arme">
+      <input type="text" class="champ-large" data-type="arme" data-id="${k}" data-champ="nom" value="${esc(a.nom)}">
+      <button class="bouton-jet" data-arme-suppr="${k}" title="Supprimer l'arme">✕</button>
+    </div>
+    <div class="grille-arme">
+      ${champNum("pr", "Pr", a.pr)}
+      ${champNum("de", "Dés", a.de, 0)}
+      ${champNum("lp", "LP", a.lp, 0)}
+      ${champNum("mp", "MP", a.mp, 0)}
+      ${champNum("cp", "CP", a.cp, 0)}
+      ${champNum("portee", "Portée (m)", a.portee, 0)}
+      <label>Rech. <input type="text" data-type="arme" data-id="${k}" data-champ="rech" value="${esc(a.rech)}"></label>
+    </div>
+    <input type="text" class="champ-large" data-type="arme" data-id="${k}" data-champ="notes" placeholder="Propriétés, équipement magique…" value="${esc(a.notes)}">
+  </div>`;
+}
+
+function formulaireArme() {
+  const b = brouillon;
+  const v = k => esc(b["ajout-arme-" + k] ?? "");
+  return `<div class="panneau panneau-compact">
+    <div class="form-ajout">
+      <input type="text" id="ajout-arme-nom" placeholder="Nom de l'arme" value="${v("nom")}">
+      <label class="resume">Pr <input type="number" id="ajout-arme-pr" value="${v("pr")}"></label>
+      <label class="resume">Dés <input type="number" id="ajout-arme-de" min="0" value="${v("de")}"></label>
+      <label class="resume">LP <input type="number" id="ajout-arme-lp" min="0" value="${v("lp")}"></label>
+      <label class="resume">MP <input type="number" id="ajout-arme-mp" min="0" value="${v("mp")}"></label>
+      <label class="resume">CP <input type="number" id="ajout-arme-cp" min="0" value="${v("cp")}"></label>
+      <label class="resume">Portée <input type="number" id="ajout-arme-portee" min="0" value="${v("portee")}"></label>
+      <label class="resume">Rech. <input type="text" id="ajout-arme-rech" placeholder="ex. 2rd" value="${v("rech")}"></label>
+      <input type="text" id="ajout-arme-notes" placeholder="Propriétés, équipement magique…" value="${v("notes")}">
+      <button data-arme-ajout="1">Ajouter l'arme</button>
+    </div>
+  </div>`;
+}
+
+function rendreArmes() {
+  const cartes = etat.armes.map(carteArme).join("");
+  return `<div class="liste-armes">${cartes || `<p class="resume">Aucune arme pour l'instant.</p>`}</div>${formulaireArme()}`;
+}
+
 // ---------- Rendu ciblé : garde le focus et les défilements ----------
 
-// Identifie un champ par ses attributs (id et data-*), pour le retrouver après un rendu
 function fidDe(el) {
   return Array.from(el.attributes)
     .filter(a => a.name === "id" || a.name.startsWith("data-"))
@@ -349,6 +427,8 @@ const RENDUS = {
   carrieres: () => remplacer("carrieres", rendreCarrieres()),
   competences: () => remplacer("competences", rendreCompetences()),
   specs: () => remplacer("specs-contenu", rendreSpecs()),
+  armures: () => remplacer("armures", rendreArmures()),
+  armes: () => remplacer("armes", rendreArmes()),
   selects: () => rendreSelects(),
   pa: () => {
     const el = document.querySelector('[data-type="pa"]');
@@ -362,7 +442,6 @@ function rendre(zones = TOUTES) {
   for (const z of zones) RENDUS[z]();
 }
 
-// Le rendu est différé d'un instant : le focus doit avoir fini de passer au champ suivant
 let zonesEnAttente = new Set();
 let minuterie = null;
 
@@ -393,7 +472,6 @@ async function sauver() {
   }
 }
 
-// Sauvegarde, puis rendu des zones concernées
 function modifier(zones) {
   sauver();
   if (zones.length) planifier(...zones);
@@ -449,6 +527,27 @@ function nettoyerFiche(brut) {
       max: p.max ? entier(p.max, 99) : null, effet: texte(p.effet)
     }));
 
+  const armes = (Array.isArray(src.armes) ? src.armes : []).slice(0, 100)
+    .filter(a => a && typeof a.id === "string")
+    .map(a => ({
+      id: a.id.slice(0, 40),
+      nom: texte(a.nom, 100),
+      pr: nombreOuNull(a.pr, -99, 99),
+      de: nombreOuNull(a.de, 0, 99),
+      lp: nombreOuNull(a.lp, 0, 99),
+      mp: nombreOuNull(a.mp, 0, 99),
+      cp: nombreOuNull(a.cp, 0, 99),
+      portee: nombreOuNull(a.portee, 0, 99999),
+      rech: texte(a.rech, 20),
+      notes: texte(a.notes, 300)
+    }));
+
+  const armure = {};
+  for (const z of ZONES) {
+    const s = src.armure?.[z.cle] || {};
+    armure[z.cle] = { val: entier(s.val, 999), etoile: s.etoile === true, desc: texte(s.desc) };
+  }
+
   const clesComps = new Set([...COMPS.map(c => c.key), ...perso.map(p => p.key)]);
   const clesSpecs = new Set([...SPECS.map(s => `${s.groupe}:${s.nom}`), ...specPerso.map(s => s.key)]);
 
@@ -464,6 +563,8 @@ function nettoyerFiche(brut) {
     }), clesComps),
     perso,
     specPerso,
+    armure,
+    armes,
     pa: entier(src.pa),
     blessures: entier(src.blessures, 40),
     maj: entier(src.maj, Number.MAX_SAFE_INTEGER)
@@ -577,6 +678,29 @@ async function onChange(e) {
       return modifier(["competences"]);
     }
 
+    case "armure": {
+      const zone = t.dataset.zone;
+      const champ = t.dataset.champ;
+      const cur = { val: 0, etoile: false, desc: "", ...(etat.armure[zone] || {}) };
+      if (champ === "etoile") cur.etoile = t.checked;
+      else if (champ === "val") cur.val = Math.max(0, Number(v) || 0);
+      else cur.desc = v.slice(0, 200);
+      etat.armure = { ...etat.armure, [zone]: cur };
+      return modifier(["armures"]);
+    }
+
+    case "arme": {
+      const a = etat.armes.find(x => x.id === t.dataset.id);
+      if (!a) return;
+      const champ = t.dataset.champ;
+      if (["nom", "rech", "notes"].includes(champ)) {
+        a[champ] = v.slice(0, champ === "notes" ? 300 : 100);
+      } else {
+        a[champ] = nombreOuNull(v, champ === "pr" ? -99 : 0, 99);
+      }
+      return modifier(["armes"]);
+    }
+
     case "pa":
       etat.pa = Math.max(0, Number(v) || 0);
       return modifier(["pa"]);
@@ -613,6 +737,33 @@ async function ajouterSpecialisation(groupe, nom, cases, seuil, max, effet) {
   modifier(["specs", "carrieres", "selects"]);
 }
 
+function ajouterArme() {
+  const nom = valeurDe("ajout-arme-nom").trim();
+  if (!nom) return alert("Indique un nom pour l'arme.");
+
+  const arme = {
+    id: genId(),
+    nom: nom.slice(0, 100),
+    pr: nombreOuNull(valeurDe("ajout-arme-pr"), -99, 99),
+    de: nombreOuNull(valeurDe("ajout-arme-de"), 0, 99),
+    lp: nombreOuNull(valeurDe("ajout-arme-lp"), 0, 99),
+    mp: nombreOuNull(valeurDe("ajout-arme-mp"), 0, 99),
+    cp: nombreOuNull(valeurDe("ajout-arme-cp"), 0, 99),
+    portee: nombreOuNull(valeurDe("ajout-arme-portee"), 0, 99999),
+    rech: valeurDe("ajout-arme-rech").trim().slice(0, 20),
+    notes: valeurDe("ajout-arme-notes").trim().slice(0, 300)
+  };
+  etat.armes = [...etat.armes, arme];
+  viderBrouillon();
+  modifier(["armes"]);
+}
+
+function supprimerArme(id) {
+  if (!confirm("Supprimer cette arme ?")) return;
+  etat.armes = etat.armes.filter(a => a.id !== id);
+  modifier(["armes"]);
+}
+
 async function importerFichier(fichier) {
   if (!tokenId) return alert("Sélectionne un token avant d'importer.");
 
@@ -639,7 +790,7 @@ async function importerFichier(fichier) {
 
 function exporter() {
   const nom = (etat.identite.nom || "personnage").replace(/[^a-z0-9_-]+/gi, "_");
-  const donnees = { format: "midgar-fiche", version: 2, date: new Date().toISOString(), fiche: etat };
+  const donnees = { format: "midgar-fiche", version: 3, date: new Date().toISOString(), fiche: etat };
   const blob = new Blob([JSON.stringify(donnees, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const lien = document.createElement("a");
@@ -783,16 +934,18 @@ function onClick(e) {
   }
   if (t.dataset.onglet) return montrer(t.dataset.onglet);
 
+  if (t.dataset.armeAjout !== undefined) return ajouterArme();
+  if (t.dataset.armeSuppr !== undefined) return supprimerArme(t.dataset.armeSuppr);
+
   if (t.dataset.gearAttr !== undefined) {
     const attr = t.dataset.gearAttr;
     formAjout = formAjout === attr ? null : attr;
     return planifier("competences");
   }
   if (t.dataset.ajout !== undefined) {
-    const nom = document.getElementById("ajout-nom").value.trim();
+    const nom = valeurDe("ajout-nom").trim();
     if (!nom) return alert("Indique un libellé pour la compétence.");
-    const type = document.getElementById("ajout-type").value;
-    return ajouterCompetence(t.dataset.ajout, nom, type);
+    return ajouterCompetence(t.dataset.ajout, nom, valeurDe("ajout-type"));
   }
   if (t.dataset.ajoutAnnuler !== undefined) {
     formAjout = null;
@@ -806,13 +959,13 @@ function onClick(e) {
     return planifier("specs");
   }
   if (t.dataset.specAjout !== undefined) {
-    const nom = document.getElementById("ajout-spec-nom").value.trim();
+    const nom = valeurDe("ajout-spec-nom").trim();
     if (!nom) return alert("Indique un nom pour la spécialisation.");
-    const cases = Math.min(8, Math.max(1, Number(document.getElementById("ajout-spec-cases").value) || 4));
-    const seuil = Math.max(1, Number(document.getElementById("ajout-spec-seuil").value) || 1);
-    const maxSaisi = Number(document.getElementById("ajout-spec-max").value);
+    const cases = Math.min(8, Math.max(1, Number(valeurDe("ajout-spec-cases")) || 4));
+    const seuil = Math.max(1, Number(valeurDe("ajout-spec-seuil")) || 1);
+    const maxSaisi = Number(valeurDe("ajout-spec-max"));
     const max = maxSaisi > 0 ? maxSaisi : null;
-    const effet = document.getElementById("ajout-spec-effet").value.trim() || "-";
+    const effet = valeurDe("ajout-spec-effet").trim() || "-";
     return ajouterSpecialisation(t.dataset.specAjout, nom, cases, seuil, max, effet);
   }
   if (t.dataset.specAjoutAnnuler !== undefined) {
@@ -850,7 +1003,6 @@ OBR.onReady(async () => {
 
     const [item] = await OBR.scene.items.getItems([id]);
     if (!(await peutOuvrir(item))) {
-      // Token non autorisé : on garde la fiche courante et on la rafraîchit
       if (tokenId) await charger();
       return;
     }
@@ -867,7 +1019,7 @@ OBR.onReady(async () => {
     if (!item || !item.metadata[CLE]) return;
 
     const distant = nettoyerFiche(item.metadata[CLE]);
-    if (distant.maj <= etat.maj) return; // notre propre sauvegarde, ou une version plus ancienne
+    if (distant.maj <= etat.maj) return;
 
     etat = distant;
     planifier(...TOUTES);

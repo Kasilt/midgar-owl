@@ -428,3 +428,17 @@ tr.attr-titre td {
     margin: 0;
     accent-color: var(--accent);
 }
+
+/* ---------- Combat : armures et armes ---------- */
+
+.champ-large { width: 100%; }
+
+.liste-armes { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+
+.ligne-arme { display: flex; gap: 6px; align-items: center; }
+.ligne-arme .champ-large { flex: 1; }
+
+.carte .grille-arme { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.carte .grille-arme label { display: flex; flex-direction: column; gap: 2px; }
+.carte .grille-arme input[type=number],
+.carte .grille-arme input[type=text] { width: 100%; }

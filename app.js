@@ -337,12 +337,61 @@ function rendreArmures() {
   }).join("") + `</div>`;
 }
 
+// ---------- Combat : dégâts ----------
+
+const MAX_TERMES = 10;
+
+// Lit une formule du type « 1d4+1d3+2 ». Renvoie { des: [{ n, f }], bonus } ou null si invalide ou vide
+function lireDegats(brut) {
+  const texte = String(brut ?? "").replace(/\s+/g, "").toLowerCase();
+  if (!texte) return null;
+
+  const termes = texte.match(/[+-]?[^+-]+/g);
+  if (!termes || termes.length > MAX_TERMES || termes.join("") !== texte) return null;
+
+  const des = [];
+  let bonus = 0;
+  for (const terme of termes) {
+    const signe = terme.startsWith("-") ? -1 : 1;
+    const corps = terme.replace(/^[+-]/, "");
+    const de = corps.match(/^(\d*)d(\d+)$/);
+    if (de) {
+      if (signe < 0) return null;   // pas de dé négatif
+      const n = de[1] === "" ? 1 : Number(de[1]);
+      const f = Number(de[2]);
+      if (n < 1 || n > 20 || f < 2 || f > 100) return null;
+      des.push({ n, f });
+    } else if (/^\d+$/.test(corps)) {
+      const v = Number(corps);
+      if (v > 99) return null;
+      bonus += signe * v;
+    } else {
+      return null;
+    }
+  }
+  if (des.length === 0 && bonus === 0) return null;
+  return { des, bonus };
+}
+
+// Affichage reformaté de la formule, ou message d'erreur
+function apercuDegats(brut) {
+  if (!brut) return `<span class="resume">—</span>`;
+  const d = lireDegats(brut);
+  if (!d) return `<span class="alerte">formule invalide (ex. 1d4+1d3+2)</span>`;
+  let txt = d.des.map(x => `${x.n}d${x.f}`).join(" + ");
+  if (d.bonus > 0) txt += ` + ${d.bonus}`;
+  if (d.bonus < 0) txt += ` - ${-d.bonus}`;
+  return `<span class="resume">→ ${esc(txt)}</span>`;
+}
+
 // ---------- Combat : armes ----------
 
 function carteArme(a) {
   const k = esc(a.id);
-  const champNum = (champ, libelle, val, min) =>
-    `<label>${libelle} <input type="number" ${min !== undefined ? `min="${min}"` : ""} data-type="arme" data-id="${k}" data-champ="${champ}" value="${val ?? ""}"></label>`;
+  const champTexte = (c, libelle, val, placeholder = "") =>
+    `<label>${libelle} <input type="text" data-type="arme" data-id="${k}" data-champ="${c}" placeholder="${esc(placeholder)}" value="${esc(val ?? "")}"></label>`;
+  const champNum = (c, libelle, val, min) =>
+    `<label>${libelle} <input type="number" ${min !== undefined ? `min="${min}"` : ""} data-type="arme" data-id="${k}" data-champ="${c}" value="${val ?? ""}"></label>`;
 
   return `<div class="carte">
     <div class="ligne-arme">
@@ -351,12 +400,17 @@ function carteArme(a) {
     </div>
     <div class="grille-arme">
       ${champNum("pr", "Pr", a.pr)}
-      ${champNum("de", "Dés", a.de, 0)}
-      ${champNum("lp", "LP", a.lp, 0)}
-      ${champNum("mp", "MP", a.mp, 0)}
-      ${champNum("cp", "CP", a.cp, 0)}
       ${champNum("portee", "Portée (m)", a.portee, 0)}
-      <label>Rech. <input type="text" data-type="arme" data-id="${k}" data-champ="rech" value="${esc(a.rech)}"></label>
+      <label>Rech. <input type="text" data-type="arme" data-id="${k}" data-champ="rech" placeholder="ex. 2rd" value="${esc(a.rech)}"></label>
+    </div>
+    <div class="ligne-degats">
+      ${champTexte("degats", "Dégâts", a.degats, "ex. 1d4+1d3+2")}
+      ${apercuDegats(a.degats)}
+    </div>
+    <div class="grille-arme">
+      ${champTexte("lp", "LP", a.lp, "ex. 2d6")}
+      ${champTexte("mp", "MP", a.mp, "ex. 2d6-1")}
+      ${champTexte("cp", "CP", a.cp, "ex. 1d6")}
     </div>
     <input type="text" class="champ-large" data-type="arme" data-id="${k}" data-champ="notes" placeholder="Propriétés, équipement magique…" value="${esc(a.notes)}">
   </div>`;
@@ -369,12 +423,12 @@ function formulaireArme() {
     <div class="form-ajout">
       <input type="text" id="ajout-arme-nom" placeholder="Nom de l'arme" value="${v("nom")}">
       <label class="resume">Pr <input type="number" id="ajout-arme-pr" value="${v("pr")}"></label>
-      <label class="resume">Dés <input type="number" id="ajout-arme-de" min="0" value="${v("de")}"></label>
-      <label class="resume">LP <input type="number" id="ajout-arme-lp" min="0" value="${v("lp")}"></label>
-      <label class="resume">MP <input type="number" id="ajout-arme-mp" min="0" value="${v("mp")}"></label>
-      <label class="resume">CP <input type="number" id="ajout-arme-cp" min="0" value="${v("cp")}"></label>
       <label class="resume">Portée <input type="number" id="ajout-arme-portee" min="0" value="${v("portee")}"></label>
       <label class="resume">Rech. <input type="text" id="ajout-arme-rech" placeholder="ex. 2rd" value="${v("rech")}"></label>
+      <input type="text" id="ajout-arme-degats" placeholder="Dégâts, ex. 1d4+1d3+2" value="${v("degats")}">
+      <input type="text" id="ajout-arme-lp" placeholder="LP (facultatif)" value="${v("lp")}">
+      <input type="text" id="ajout-arme-mp" placeholder="MP (facultatif)" value="${v("mp")}">
+      <input type="text" id="ajout-arme-cp" placeholder="CP (facultatif)" value="${v("cp")}">
       <input type="text" id="ajout-arme-notes" placeholder="Propriétés, équipement magique…" value="${v("notes")}">
       <button data-arme-ajout="1">Ajouter l'arme</button>
     </div>
@@ -533,12 +587,12 @@ function nettoyerFiche(brut) {
       id: a.id.slice(0, 40),
       nom: texte(a.nom, 100),
       pr: nombreOuNull(a.pr, -99, 99),
-      de: nombreOuNull(a.de, 0, 99),
-      lp: nombreOuNull(a.lp, 0, 99),
-      mp: nombreOuNull(a.mp, 0, 99),
-      cp: nombreOuNull(a.cp, 0, 99),
       portee: nombreOuNull(a.portee, 0, 99999),
       rech: texte(a.rech, 20),
+      degats: texte(a.degats, 40),
+      lp: texte(a.lp, 40),
+      mp: texte(a.mp, 40),
+      cp: texte(a.cp, 40),
       notes: texte(a.notes, 300)
     }));
 
@@ -693,10 +747,11 @@ async function onChange(e) {
       const a = etat.armes.find(x => x.id === t.dataset.id);
       if (!a) return;
       const champ = t.dataset.champ;
-      if (["nom", "rech", "notes"].includes(champ)) {
-        a[champ] = v.slice(0, champ === "notes" ? 300 : 100);
+      if (["nom", "rech", "notes", "degats", "lp", "mp", "cp"].includes(champ)) {
+        const max = champ === "notes" ? 300 : champ === "nom" ? 100 : champ === "rech" ? 20 : 40;
+        a[champ] = v.trim().slice(0, max);
       } else {
-        a[champ] = nombreOuNull(v, champ === "pr" ? -99 : 0, 99);
+        a[champ] = nombreOuNull(v, champ === "pr" ? -99 : 0, champ === "portee" ? 99999 : 99);
       }
       return modifier(["armes"]);
     }
@@ -745,12 +800,12 @@ function ajouterArme() {
     id: genId(),
     nom: nom.slice(0, 100),
     pr: nombreOuNull(valeurDe("ajout-arme-pr"), -99, 99),
-    de: nombreOuNull(valeurDe("ajout-arme-de"), 0, 99),
-    lp: nombreOuNull(valeurDe("ajout-arme-lp"), 0, 99),
-    mp: nombreOuNull(valeurDe("ajout-arme-mp"), 0, 99),
-    cp: nombreOuNull(valeurDe("ajout-arme-cp"), 0, 99),
     portee: nombreOuNull(valeurDe("ajout-arme-portee"), 0, 99999),
     rech: valeurDe("ajout-arme-rech").trim().slice(0, 20),
+    degats: valeurDe("ajout-arme-degats").trim().slice(0, 40),
+    lp: valeurDe("ajout-arme-lp").trim().slice(0, 40),
+    mp: valeurDe("ajout-arme-mp").trim().slice(0, 40),
+    cp: valeurDe("ajout-arme-cp").trim().slice(0, 40),
     notes: valeurDe("ajout-arme-notes").trim().slice(0, 300)
   };
   etat.armes = [...etat.armes, arme];

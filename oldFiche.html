@@ -1,0 +1,1308 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Midgar - Fiche</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
+  <style>
+    :root {
+      --fond: rgba(35, 38, 46, 0.80);
+      --panneau: rgba(43, 47, 56, 0.80);
+      --champ: rgba(28, 31, 38, 0.85);
+      --bordure: #3c414d;
+      --texte: #e8eaf0;
+      --discret: #9aa1ae;
+      --accent: #4f9dff;
+      --bouton: #3a3f4b;
+      --bouton-survol: #4a5060;
+      --ok: #4caf7a;
+      --alerte: #ff6b6b;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 12px;
+      background: var(--fond);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      color: var(--texte);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      font-size: 13px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    h1 {
+      font-size: 15px;
+      margin: 0;
+      font-weight: 600;
+    }
+
+    .sous-titre {
+      font-size: 12px;
+      color: var(--accent);
+      margin-top: 2px;
+    }
+
+    .pa {
+      color: var(--discret);
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .pa input {
+      width: 64px;
+    }
+
+    .material-symbols-outlined {
+      font-size: 18px;
+      vertical-align: middle;
+      line-height: 1;
+    }
+
+    #statut {
+      color: var(--discret);
+    }
+
+    nav.onglets {
+      display: flex;
+      gap: 4px;
+      margin: 10px 0;
+      background: var(--panneau);
+      border-radius: 10px;
+      padding: 4px;
+    }
+
+    nav.onglets button {
+      flex: 1;
+      background: transparent;
+      color: var(--discret);
+      padding: 6px 8px;
+      border-radius: 7px;
+      font-size: 12px;
+    }
+
+    nav.onglets button:hover {
+      color: var(--texte);
+      background: transparent;
+    }
+
+    nav.onglets button.actif {
+      background: var(--bouton);
+      color: var(--texte);
+      font-weight: 600;
+    }
+
+    .onglet {
+      display: none;
+    }
+
+    .onglet.actif {
+      display: block;
+    }
+
+    section.onglet {
+      background: var(--panneau);
+      border-radius: 10px;
+      padding: 10px;
+    }
+
+    h2 {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: var(--discret);
+      margin: 14px 0 6px;
+      padding-bottom: 4px;
+      border-bottom: 1px solid var(--bordure);
+      font-weight: 600;
+    }
+
+    h2:first-child {
+      margin-top: 0;
+    }
+
+    h3 {
+      font-size: 12px;
+      margin: 14px 0 4px;
+    }
+
+    .grille {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 6px 12px;
+    }
+
+    .grille label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+      color: var(--discret);
+    }
+
+    input,
+    select,
+    button {
+      font: inherit;
+      color: var(--texte);
+    }
+
+    input[type=text],
+    input[type=number],
+    select {
+      background: var(--champ);
+      border: 1px solid var(--bordure);
+      border-radius: 6px;
+      padding: 3px 6px;
+    }
+
+    input[type=text] {
+      width: 130px;
+    }
+
+    input[type=number] {
+      width: 60px;
+    }
+
+    input[type=checkbox] {
+      accent-color: var(--accent);
+    }
+
+    input:focus,
+    select:focus {
+      outline: 1px solid var(--accent);
+    }
+
+    button {
+      background: var(--bouton);
+      border: 0;
+      border-radius: 6px;
+      padding: 4px 10px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: var(--bouton-survol);
+    }
+
+    button.bouton-jet {
+      padding: 3px 8px;
+      font-size: 12px;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+
+    td,
+    th {
+      border-bottom: 1px solid #343844;
+      padding: 4px 6px;
+      text-align: left;
+      vertical-align: middle;
+    }
+
+    th {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .03em;
+      color: var(--discret);
+      font-weight: 600;
+    }
+
+    tr.attr-titre td {
+      font-weight: 600;
+      padding-top: 10px;
+      border-bottom: 1px solid var(--bordure);
+    }
+
+    .resume {
+      font-size: 12px;
+      color: var(--discret);
+    }
+
+    .alerte {
+      color: var(--alerte);
+      font-weight: 600;
+    }
+
+    .ok {
+      color: var(--ok);
+      font-weight: 600;
+    }
+
+    .panneau {
+      background: var(--champ);
+      border-radius: 8px;
+    }
+
+    .liste-specs {
+      max-height: 180px;
+      overflow-y: auto;
+      border: 1px solid var(--bordure);
+      background: var(--champ);
+      border-radius: 6px;
+      padding: 6px;
+      margin: 6px 0;
+    }
+
+    #jet {
+      background: var(--panneau);
+      border: 1px solid var(--bordure);
+      border-left: 3px solid var(--accent);
+      border-radius: 10px;
+      padding: 8px 10px;
+      margin: 0 0 10px;
+      min-height: 48px;
+    }
+
+    #jet .titre-jet {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    #jet .detail {
+      font-size: 12px;
+      color: var(--discret);
+      margin-top: 2px;
+    }
+
+    #carrieres table {
+      width: auto;
+    }
+
+    #carrieres td,
+    #carrieres th {
+      padding: 4px 14px 4px 0;
+      border: 0;
+    }
+
+    .rangee {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+
+    .groupe {
+      flex: 1;
+      background: var(--champ);
+      border: 1px solid var(--bordure);
+      border-radius: 8px;
+      padding: 5px;
+      min-width: 0;
+    }
+
+    .groupe.mortelle {
+      border-color: #8c3a3a;
+    }
+
+    .gtitre {
+      font-size: 11px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .gtitre span {
+      color: var(--alerte);
+    }
+
+    .cases {
+      display: flex;
+      gap: 3px;
+      margin-top: 4px;
+    }
+
+    .cases input {
+      margin: 0;
+      accent-color: var(--accent);
+    }
+
+    #btn-recharger {
+      margin-top: 10px;
+    }
+
+    /* Attributs : 3 colonnes */
+    #attributs {
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px 10px;
+    }
+
+    #attributs label {
+      font-size: 12px;
+    }
+
+    #attributs input[type=number] {
+      width: 50px;
+    }
+
+    /* Carrières : 2 par ligne */
+    .cartes-carriere {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px 10px;
+    }
+
+    .carte {
+      background: var(--champ);
+      border: 1px solid var(--bordure);
+      border-radius: 8px;
+      padding: 6px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .carte-nom {
+      font-weight: 600;
+    }
+
+    .carte label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--discret);
+    }
+
+    .carte input[type=number] {
+      width: 50px;
+    }
+
+    /* Masque les flèches des champs numériques (Chrome, Edge, Safari, Android) */
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    /* Firefox */
+    input[type=number] {
+      -moz-appearance: textfield;
+      appearance: textfield;
+    }
+
+    .form-ajout {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+    }
+
+    #ajout-nom {
+      width: 180px;
+
+
+    }
+
+    .titre-groupe {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <div>
+      <h1>Midgar — Le Royaume des Intrigues</h1>
+      <div id="entete" class="sous-titre"></div>
+    </div>
+    <div class="pa">PA <input type="number" min="0" data-type="pa" value="0"></div>
+  </header>
+
+  <p id="statut">Sélectionne un token pour voir sa fiche.</p>
+
+  <div id="fiche" hidden>
+
+    <nav class="onglets">
+      <button data-onglet="infos" class="actif">Infos</button>
+      <button data-onglet="comps">Compétences</button>
+      <button data-onglet="specs">Spécialisations</button>
+      <button data-onglet="jets">Jets</button>
+    </nav>
+    <div id="jet"><span class="detail">Aucun jet pour l'instant.</span></div>
+    <section id="infos" class="onglet actif">
+      <h2>Identité</h2>
+      <div class="grille" id="identite"></div>
+      <h2>Caractéristiques</h2>
+      <div class="grille" id="attributs"></div>
+      <h2>Blessures</h2>
+      <div id="blessures"></div>
+      <h2>Carrières</h2>
+      <div id="carrieres"></div>
+    </section>
+
+    <section id="comps" class="onglet">
+      <div id="competences"></div>
+    </section>
+
+    <section id="specs" class="onglet">
+      <div id="specs-contenu"></div>
+    </section>
+
+    <section id="jets" class="onglet">
+      <h2>Lancer un test</h2>
+      <p><label>Compétence <select id="sel-comp"></select></label></p>
+      <p><label>Spécialisation <select id="sel-spec"></select></label></p>
+      <p><button id="btn-lancer">Lancer</button></p>
+
+      <h2>Initiative</h2>
+      <p><label><input type="checkbox" id="embuscade-ok"> Embuscade réussie</label></p>
+      <p><button id="btn-initiative">Initiative</button></p>
+
+      <h2>Embuscade</h2>
+      <p><button id="btn-embuscade">Se cacher / Semer</button></p>
+    </section>
+
+
+
+    <p>
+      <button id="btn-recharger">Recharger la fiche</button>
+      <button id="btn-exporter">Exporter</button>
+      <button id="btn-importer">Importer</button>
+      <input type="file" id="fichier-import" accept=".json,application/json" hidden>
+    </p>
+  </div>
+
+  <script type="module">
+    import OBR from "https://esm.sh/@owlbear-rodeo/sdk@3";
+
+    const CLE = "fr.midgar.fiche";
+    const CLE_DERNIER = "midgar-dernier-token";
+    const FACTEUR = { "o": 1, "/": 2, "": 3 };
+
+    const IDENTITE = [
+      ["nom", "Nom"], ["age", "Âge"], ["taille_p", "Taille"], ["poids", "Poids"],
+      ["cheveux", "Cheveux"], ["yeux", "Yeux"], ["metier", "Métier"],
+      ["humanite", "Humanité"], ["reputation", "Réputation"], ["niveau_social", "Niveau social"]
+    ];
+
+    const ATTRIBUTS = ["Intelligence", "Dextérité", "Arts", "Empathie", "Force", "Constitution",
+      "Chance", "Agilité", "Volonté", "Pouvoir", "Beauté", "Taille"];
+
+    const COMPETENCES = {
+      Intelligence: ["Alchimie", "Astrologie", "Bibliothèque", "Biologie / Zoologie", "Botanique", "Chimie",
+        "Coder / Décoder", "Droit", "Écouter", "Enseigner", "Évaluer", "Expert", "Expert", "Histoire / Géo",
+        "Lire / Écrire", "Lire / Écrire", "Maths", "Minéraux", "Orientation", "Parler", "Parler", "Parler",
+        "Physique", "Pièges / Serrures", "Poisons", "Sentir / Goûter", "Théologie", "Us & Coutumes", "Voir"],
+      Dextérité: ["Arbalètes", "Arcs", "Armes à feu", "Armes de jet", "Bâtons", "Bouclier", "Conduite attelage",
+        "Dague", "Escamoter", "Jonglerie", "Lancer", "Lutte", "Manip. poisons"],
+      Arts: ["Art", "Artisanat", "Bricolage", "Cartographie", "Contrefaçon", "Crocheter", "Cuisine", "Déguisement",
+        "Désamorcer / Piéger", "Dessin", "Musique", "Navigation", "Pickpocket", "Potions", "Premiers soins"],
+      Force: ["Armes articulées", "Armes d'hast", "Contondantes", "Piques", "Tranchantes"],
+      Constitution: ["Endurance", "Natation"],
+      Chance: ["Jeux de hasard"],
+      Empathie: ["Baratin / Persuasion", "Comédie", "Commandement", "Dressage", "Étiquette / Social",
+        "Marchandage", "Perception humaine", "Séduction"],
+      Volonté: ["Code moral", "Code moral", "Code moral", "Connaissance de la rue", "Corruption", "Éloquence",
+        "Interrogation", "Pistage", "Résistance à la torture"],
+      Agilité: ["Acrobatie", "Danse", "Discrétion", "Équitation", "Esquive", "Grimper", "Se cacher / Semer"],
+      Pouvoir: ["Sixième sens"],
+      Beauté: [],
+      Taille: []
+    };
+
+    const COMPS = [];
+    for (const attr of ATTRIBUTS) {
+      for (const nom of (COMPETENCES[attr] || [])) COMPS.push({ attr, nom });
+    }
+
+    const GROUPES = ["Générale", "Guerrier", "Erudit", "Voleur"];
+
+    const CARRIERES = [
+      { nom: "Générale", groupe: "Générale" },
+      { nom: "Guerrier", groupe: "Guerrier" },
+      { nom: "Erudit", groupe: "Erudit" },
+      { nom: "Voleur", groupe: "Voleur" },
+      { nom: "Mystique", groupe: null }
+    ];
+
+    const SPECS = [
+      { groupe: "Générale", nom: "Apparence", cases: 5, effet: "+1 en Beauté" },
+      { groupe: "Générale", nom: "Armurerie", cases: 4, effet: "+1 Armurerie" },
+      { groupe: "Générale", nom: "Assommer", cases: 4, effet: "+1 Dégâts" },
+      { groupe: "Générale", nom: "Embuscade", cases: 1, effet: "Initiative auto" },
+      { groupe: "Générale", nom: "Empathie animale", cases: 4, effet: "+1 Dressage" },
+      { groupe: "Générale", nom: "Faire des nœuds", cases: 1, effet: "-" },
+      { groupe: "Générale", nom: "Galanterie", cases: 4, effet: "+1 Séduction" },
+      { groupe: "Générale", nom: "Influence", cases: 4, effet: "+1 Corruption" },
+      { groupe: "Générale", nom: "Négociation", cases: 4, effet: "+1 Marchandage" },
+      { groupe: "Générale", nom: "Pourparlers", cases: 4, effet: "+1 Baratin / Pers." },
+      { groupe: "Guerrier", nom: "Bouclier - Attaque", cases: 4, effet: "+1 bouclier" },
+      { groupe: "Guerrier", nom: "Combat monté", cases: 4, effet: "+1 sinon -5" },
+      { groupe: "Guerrier", nom: "Coup précis au contact", cases: 3, effet: "+1 Toucher" },
+      { groupe: "Guerrier", nom: "Coup puissant", cases: 4, effet: "+1 Dégâts" },
+      { groupe: "Guerrier", nom: "Culbutes", cases: 4, effet: "+1 Acro / Esquive" },
+      { groupe: "Guerrier", nom: "Parades", cases: 4, effet: "+1 Parade" },
+      { groupe: "Guerrier", nom: "Précision au tir", cases: 2, effet: "+1 Toucher" },
+      { groupe: "Guerrier", nom: "Tranchantes à 2 mains", cases: 1, effet: "0 sinon -5" },
+      { groupe: "Erudit", nom: "Apothicaire", cases: 4, effet: "+1 Chimie" },
+      { groupe: "Erudit", nom: "Astronomie", cases: 4, effet: "+1 Astrologie" },
+      { groupe: "Erudit", nom: "Biologie végétale", cases: 4, effet: "+1 Botanique" },
+      { groupe: "Erudit", nom: "Ethnologie", cases: 4, effet: "+1 Us & Coût." },
+      { groupe: "Erudit", nom: "Invention", cases: 8, seuil: 4, max: 2, effet: "Min / Maj" },
+      { groupe: "Erudit", nom: "Médecine", cases: 4, effet: "+1 1ers Soins" },
+      { groupe: "Erudit", nom: "Mémorisation", cases: 1, effet: "-" },
+      { groupe: "Erudit", nom: "Théologie", cases: 4, effet: "+1 Théologie" },
+      { groupe: "Voleur", nom: "Coup précis à distance", cases: 4, effet: "+1 Toucher" },
+      { groupe: "Voleur", nom: "Discrétion", cases: 4, effet: "+1 Discrétion" },
+      { groupe: "Voleur", nom: "Dissimulation dans l'ombre", cases: 4, effet: "+1 Disc. / Se cacher" },
+      { groupe: "Voleur", nom: "Économie locale", cases: 4, effet: "+1 Conn. de la rue" },
+      { groupe: "Voleur", nom: "Filature", cases: 4, effet: "+1 Pistage" },
+      { groupe: "Voleur", nom: "Grimer", cases: 4, effet: "+1 Déguisement" },
+      { groupe: "Voleur", nom: "Investigation", cases: 4, effet: "+1 Voir" },
+      { groupe: "Voleur", nom: "Poisons", cases: 4, effet: "+1 Poisons" },
+      { groupe: "Voleur", nom: "Précision au tir", cases: 4, effet: "+1 Toucher" },
+      { groupe: "Voleur", nom: "Prestidigitation", cases: 1, effet: "-" }
+    ];
+
+    // 10 groupes de 4 cases (40 au total). L'effet vaut -g pour le groupe d'indice g.
+    // cons : modificateur du jet de Constitution exigé pour les groupes Mortelle (indices 6 à 9).
+    const BLESSURES = [
+      { nom: "Légère" }, { nom: "Moyenne" }, { nom: "Sérieuse" }, { nom: "Critique" },
+      { nom: "Handicap" }, { nom: "Invalidité" },
+      { nom: "Mortelle", cons: 0 }, { nom: "Mortelle (1)", cons: -1 },
+      { nom: "Mortelle (2)", cons: -2 }, { nom: "Mortelle (3)", cons: -3 }
+    ];
+
+    // ---------- État ----------
+
+    let tokenId = null;
+    let etat = defaut();
+    let uiOuvert = null;
+    let jetUnique = null;
+    let formAjout = null;   // caractéristique dont le formulaire d'ajout est ouvert
+    let formSpec = null;   // groupe dont le formulaire d'ajout de spécialisation est ouvert
+
+    function defaut() {
+      return { identite: {}, attributs: {}, carrieres: {}, specs: {}, comps: {}, pa: 0, blessures: 0 };
+    }
+
+    // Liste complète : compétences de base (clés "0", "1", …) puis compétences ajoutées (clés "p…")
+    function listeComps() {
+      const base = COMPS.map((c, i) => ({ key: String(i), attr: c.attr, nom: c.nom }));
+      const perso = (etat.perso || []).map(p => ({ key: "p" + p.id, attr: p.attr, nom: p.nom, type: p.type }));
+      return [...base, ...perso];
+    }
+
+    function compDe(key) {
+      return listeComps().find(c => c.key === key);
+    }
+
+    function niveauComp(key) {
+      const d = etat.comps[key] || {};
+      const perso = (etat.perso || []).find(p => "p" + p.id === key);
+      return {
+        sym: d.sym ?? (perso ? perso.type : ""),
+        niveau: d.niveau ?? 0,
+        specs: d.specs ?? []
+      };
+    }
+
+    async function ajouterCompetence(attr, nom, type) {
+      etat.perso = [...(etat.perso || []), { id: Date.now().toString(36), attr, nom, type }];
+      formAjout = null;
+      await sauver();
+      rendre();
+    }
+    async function ajouterSpecialisation(groupe, nom, cases, seuil, max, effet) {
+      etat.specPerso = [...(etat.specPerso || []), {
+        id: Date.now().toString(36), groupe, nom, cases, seuil, max, effet
+      }];
+      formSpec = null;
+      await sauver();
+      rendre();
+    }
+
+    function formulaireSpec(groupe) {
+      return `<div class="panneau" style="padding:6px;margin-bottom:6px">
+    <div class="form-ajout">
+      <input type="text" id="ajout-spec-nom" placeholder="Nom de la spécialisation">
+      <label class="resume">Cases <input type="number" id="ajout-spec-cases" min="1" max="8" value="4"></label>
+      <label class="resume">Seuil <input type="number" id="ajout-spec-seuil" min="1" value="1"></label>
+      <label class="resume">Max <input type="number" id="ajout-spec-max" min="1" placeholder="= cases"></label>
+      <input type="text" id="ajout-spec-effet" placeholder="Effet (ex. +1 Toucher)">
+      <button data-spec-ajout="${esc(groupe)}">Ajouter</button>
+      <button data-spec-ajout-annuler="1">Annuler</button>
+    </div>
+  </div>`;
+    }
+
+    function formulaireAjout(attr) {
+      return `<tr><td colspan="5" class="panneau">
+    <div class="form-ajout">
+      <input type="text" id="ajout-nom" placeholder="Libellé de la compétence">
+      <select id="ajout-type">
+        <option value="">-</option><option value="/">/</option><option value="o">o</option>
+      </select>
+      <button data-ajout="${esc(attr)}">Ajouter</button>
+      <button data-ajout-annuler="1">Annuler</button>
+    </div>
+  </td></tr>`;
+    }
+
+    // Liste complète : spécialisations de base puis spécialisations ajoutées
+    function listeSpecs() {
+      const perso = (etat.specPerso || []).map(p => ({
+        key: "p" + p.id, groupe: p.groupe, nom: p.nom, cases: p.cases,
+        seuil: p.seuil, max: p.max, effet: p.effet
+      }));
+      return [...SPECS, ...perso];
+    }
+
+    function specKey(s) { return s.key ?? (s.groupe + ":" + s.nom); }
+    function specDe(k) { return listeSpecs().find(s => specKey(s) === k); }
+
+    function bonusSpec(s) {
+      const points = etat.specs[specKey(s)] || 0;
+      const seuil = s.seuil || 1;
+      const max = s.max ?? s.cases;
+      return Math.min(Math.floor(points / seuil), max);
+    }
+
+    function pointsUtilises(groupe) {
+      return listeSpecs().filter(s => s.groupe === groupe)
+        .reduce((total, s) => total + (etat.specs[specKey(s)] || 0), 0);
+    }
+
+    function coutProchainNiveau(comp) {
+      const facteur = FACTEUR[comp.sym] ?? 3;
+      if (comp.niveau === 0) {
+        return { cout: 3 * facteur, accordMJ: true };
+      }
+      return { cout: (comp.niveau + 1) * facteur, accordMJ: false };
+    }
+
+    // Pénalité aux jets de compétence selon le nombre de cases cochées
+    function penaliteBlessures() {
+      const n = etat.blessures || 0;
+      return n === 0 ? 0 : -Math.floor((n - 1) / 4);
+    }
+
+    function esc(texte) {
+      return String(texte ?? "")
+        .replace(/&/g, "&amp;").replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    // ---------- Onglets ----------
+
+    function montrer(nom) {
+      document.querySelectorAll(".onglet").forEach(s => s.classList.toggle("actif", s.id === nom));
+      document.querySelectorAll("nav.onglets button").forEach(b => b.classList.toggle("actif", b.dataset.onglet === nom));
+    }
+
+    // ---------- Rendu ----------
+
+    function panneauSpecs(i, d) {
+      const specs = listeSpecs();
+      const cases = specs.map(s => {
+        const k = specKey(s);
+        const coche = d.specs.includes(k) ? "checked" : "";
+        return `<label style="display:block">
+      <input type="checkbox" data-type="compspec" data-comp="${i}" data-key="${esc(k)}" ${coche}>
+      ${s.groupe} — ${esc(s.nom)} (+${bonusSpec(s)})
+    </label>`;
+      }).join("");
+
+      const options = `<option value="">aucune</option>` + specs.map(s => {
+        const k = specKey(s);
+        const sel = jetUnique && jetUnique.i === i && jetUnique.key === k ? "selected" : "";
+        return `<option value="${esc(k)}" ${sel}>${s.groupe} — ${esc(s.nom)}</option>`;
+      }).join("");
+
+      return `<tr><td colspan="5" class="panneau">
+    <div><b>Spécialisations associées (toujours actives)</b></div>
+    <div class="liste-specs">${cases}</div>
+    <label>Pour ce jet uniquement : <select data-type="jetunique" data-comp="${i}">${options}</select></label>
+  </td></tr>`;
+    }
+
+    function rendreBlessures() {
+      const n = etat.blessures || 0;
+      let html = "";
+      for (let rangee = 0; rangee < 2; rangee++) {
+        html += `<div class="rangee">`;
+        for (let g = rangee * 5; g < rangee * 5 + 5; g++) {
+          const b = BLESSURES[g];
+          html += `<div class="groupe${g >= 6 ? " mortelle" : ""}">
+        <div class="gtitre">${b.nom} <span>${-g}</span></div>
+        <div class="cases">`;
+          for (let k = 1; k <= 4; k++) {
+            const num = 4 * g + k;
+            html += `<input type="checkbox" data-type="blessure" data-id="${num}" ${num <= n ? "checked" : ""}>`;
+          }
+          html += `</div></div>`;
+        }
+        html += `</div>`;
+      }
+      html += `<p class="resume">Blessures : ${n} / 40 · pénalité aux jets de compétence : ${penaliteBlessures()}</p>`;
+      document.getElementById("blessures").innerHTML = html;
+    }
+    const ABREV = {
+      "Intelligence": "Int", "Dextérité": "Dex", "Arts": "Art", "Volonté": "Vol",
+      "Force": "For", "Chance": "Ch", "Agilité": "Ag", "Constitution": "Con",
+      "Empathie": "Emp", "Pouvoir": "Pou", "Taille": "Tai", "Beauté": "Bt"
+    };
+    function rendre() {
+      const selComp = document.getElementById("sel-comp");
+      const selSpec = document.getElementById("sel-spec");
+      const ancienComp = selComp.value || "0";
+      const ancienSpec = selSpec.value || "";
+
+      document.getElementById("identite").innerHTML = IDENTITE.map(([cle, libelle]) =>
+        `<label>${libelle} <input type="text" data-type="identite" data-id="${cle}" value="${esc(etat.identite[cle])}"></label>`
+      ).join("");
+
+      document.querySelector('[data-type="pa"]').value = etat.pa;
+
+      document.getElementById("attributs").innerHTML = ATTRIBUTS.map(attr =>
+        `<label title="${attr}">${ABREV[attr]} <input type="number" min="0" data-type="attr" data-id="${attr}" value="${etat.attributs[attr] || 0}"></label>`
+      ).join("");
+
+      rendreBlessures();
+
+      document.getElementById("carrieres").innerHTML =
+        `<div class="cartes-carriere">` + CARRIERES.map(c => {
+          const rang = etat.carrieres[c.nom] || 0;
+          let info;
+          if (!c.groupe) {
+            info = `<span class="resume">à venir</span>`;
+          } else {
+            const reste = rang - pointsUtilises(c.groupe);
+            info = reste < 0
+              ? `<span class="alerte">dépassement de ${-reste}</span>`
+              : `<span class="${reste === 0 ? "ok" : ""}">${reste}</span>`;
+          }
+          return `<div class="carte">
+        <div class="carte-nom">${c.nom}</div>
+        <label>Rang <input type="number" min="0" data-type="carriere" data-id="${c.nom}" value="${rang}"></label>
+        <div class="resume">Points à répartir : ${info}</div>
+      </div>`;
+        }).join("") + `</div>`;
+
+      document.getElementById("specs-contenu").innerHTML = GROUPES.map(g => {
+        const carriere = CARRIERES.find(c => c.groupe === g);
+        const rang = etat.carrieres[carriere.nom] || 0;
+        const utilises = pointsUtilises(g);
+        const reste = rang - utilises;
+        const alerte = reste < 0 ? ` <span class="alerte">— dépassement de ${-reste}</span>` : "";
+
+        const lignes = listeSpecs().filter(s => s.groupe === g)
+          .sort((a, b) => a.nom.localeCompare(b.nom, "fr", { sensitivity: "base" }))
+          .map(s => {
+            const k = specKey(s);
+            const points = etat.specs[k] || 0;
+            const info = (s.seuil > 1 || s.max)
+              ? ` (${s.seuil || 1} pts par +1, max +${s.max ?? s.cases})`
+              : "";
+            return `<tr>
+          <td>${esc(s.nom)}</td>
+          <td><input type="number" min="0" max="${s.cases}" data-type="spec" data-id="${esc(k)}" value="${points}"> / ${s.cases}</td>
+          <td>+${bonusSpec(s)}${info}</td>
+          <td class="resume">${esc(s.effet)}</td>
+        </tr>`;
+          }).join("");
+
+        const formulaire = formSpec === g ? formulaireSpec(g) : "";
+
+        return `<div class="titre-groupe">
+        <h3>Spécialisations de ${g}</h3>
+        <button class="bouton-jet" data-gear-groupe="${g}" title="Ajouter une spécialisation">⚙</button>
+      </div>
+      ${formulaire}
+      <div class="resume">Rang ${rang} · points utilisés ${utilises}${alerte}</div>
+      <table><tr><th>Spécialisation</th><th>Points</th><th>Bonus</th><th>Effet</th></tr>${lignes}</table>`;
+      }).join("");
+
+      const toutes = listeComps();
+      let htmlComp = `<table><tr><th>Compétence</th><th></th><th>Niveau</th><th>Achat</th><th></th></tr>`;
+      for (const attr of ATTRIBUTS) {
+        const liste = toutes
+          .filter(c => c.attr === attr)
+          .sort((a, b) => a.nom.localeCompare(b.nom, "fr", { sensitivity: "base" }));
+        htmlComp += `<tr class="attr-titre">
+      <td colspan="4">${attr} (${etat.attributs[attr] || 0})</td>
+      <td><button class="bouton-jet" data-gear-attr="${attr}" title="Ajouter une compétence">⚙</button></td>
+    </tr>`;
+        if (formAjout === attr) htmlComp += formulaireAjout(attr);
+
+        for (const c of liste) {
+          const d = niveauComp(c.key);
+          const option = (v, libelle) => `<option value="${v}" ${d.sym === v ? "selected" : ""}>${libelle}</option>`;
+          const { cout, accordMJ } = coutProchainNiveau(d);
+          const indice = d.specs.length ? ` <span class="resume">(${d.specs.length} spé.)</span>` : "";
+          htmlComp += `<tr>
+        <td>${esc(c.nom)}${indice}</td>
+        <td><select data-type="compsym" data-id="${c.key}">${option("", "-")}${option("/", "/")}${option("o", "o")}</select></td>
+        <td><input type="number" min="0" data-type="compniv" data-id="${c.key}" value="${d.niveau}"></td>
+        <td><button data-achat="${c.key}" title="Acheter le niveau suivant"><span class="material-symbols-outlined">stat_3</span></button> ${cout} PA${accordMJ ? "*" : ""}</td>
+        <td>
+          <button class="bouton-jet" data-jet="${c.key}">Jet</button>
+          <button class="bouton-jet" data-gear="${c.key}" title="Spécialisations associées">⚙</button>
+        </td>
+      </tr>`;
+          if (uiOuvert === c.key) htmlComp += panneauSpecs(c.key, d);
+        }
+      }
+      htmlComp += `</table>`;
+      document.getElementById("competences").innerHTML = htmlComp;
+
+      selComp.innerHTML = [...toutes]
+        .sort((a, b) => a.attr.localeCompare(b.attr, "fr") || a.nom.localeCompare(b.nom, "fr", { sensitivity: "base" }))
+        .map(c => `<option value="${c.key}">${c.attr} — ${esc(c.nom)}</option>`).join("");
+      selComp.value = ancienComp;
+
+      const optionsSpec = listeSpecs().filter(s => bonusSpec(s) > 0)
+        .map(s => `<option value="${esc(specKey(s))}">${s.groupe} — ${esc(s.nom)} (+${bonusSpec(s)})</option>`)
+        .join("");
+      selSpec.innerHTML = `<option value="">Aucune spécialisation</option>${optionsSpec}`;
+      selSpec.value = ancienSpec;
+    }
+
+    // Un MJ voit toutes les fiches ; un joueur seulement celles des tokens qu'il a créés
+    async function peutOuvrir(item) {
+      if (!item) return false;
+      const role = await OBR.player.getRole();
+      if (role === "GM") return true;
+      const monId = await OBR.player.getId();
+      return item.createdUserId === monId;
+    }
+    // ---------- Sauvegarde et chargement ----------
+
+    async function sauver() {
+      if (!tokenId) return;
+      const copie = JSON.parse(JSON.stringify(etat));
+      try {
+        await OBR.scene.items.updateItems([tokenId], (items) => {
+          for (const item of items) item.metadata[CLE] = copie;
+        });
+      } catch (err) {
+        alert("Impossible d'enregistrer la fiche : tu n'as sans doute pas les droits sur ce token.");
+        console.error(err);
+      }
+    }
+
+    async function charger(nouveauToken = false) {
+      const statut = document.getElementById("statut");
+      const fiche = document.getElementById("fiche");
+      const entete = document.getElementById("entete");
+
+      if (!tokenId) {
+        entete.textContent = "Aucun token sélectionné";
+        statut.textContent = "Sélectionne un token pour voir sa fiche.";
+        statut.hidden = false;
+        fiche.hidden = true;
+        return;
+      }
+
+      const [item] = await OBR.scene.items.getItems([tokenId]);
+      entete.textContent = item
+        ? `Token : ${item.name}`
+        : "Token introuvable sur la table";
+
+      if (!item) {
+        statut.textContent = "Ce token n'est plus sur la table.";
+        statut.hidden = false;
+        fiche.hidden = true;
+        return;
+      }
+
+      if (!(await peutOuvrir(item))) {
+        tokenId = null;
+        statut.textContent = "Aucun personnage autorisé sélectionné. Sélectionne un de tes personnages.";
+        statut.hidden = false;
+        fiche.hidden = true;
+        entete.textContent = "Accès refusé à ce token";
+        return;
+      }
+
+      // Nouveau token : on repart de l'onglet Infos, sans sous-menu ouvert
+      if (nouveauToken) {
+        uiOuvert = null;
+        jetUnique = null;
+        formAjout = null;
+        formSpec = null;
+        montrer("infos");
+        window.scrollTo(0, 0);
+      }
+
+      etat = { ...defaut(), ...(item.metadata[CLE] ?? {}) };
+      statut.hidden = true;
+      fiche.hidden = false;
+      rendre();
+    }
+
+    // ---------- Actions ----------
+
+    async function onChange(e) {
+      const t = e.target;
+      if (t.id === "fichier-import") {
+        const fichier = t.files[0];
+        t.value = "";   // permet de réimporter le même fichier ensuite
+        if (fichier) await importerFichier(fichier);
+        return;
+      }
+      const type = t.dataset.type;
+      if (!type) return;
+      const id = t.dataset.id;
+      const v = t.value;
+
+      if (type === "jetunique") {
+        jetUnique = v ? { i: t.dataset.comp, key: v } : null;
+        return;
+      }
+
+      if (type === "blessure") {
+        const n = Number(id);
+        const ancien = etat.blessures || 0;
+        const nouveau = t.checked ? n : n - 1;
+        etat.blessures = nouveau;
+        await sauver();
+        if (nouveau > ancien) verifierEntrees(ancien, nouveau);
+        rendre();
+        return;
+      }
+
+      if (type === "identite") etat.identite[id] = v;
+      else if (type === "attr") etat.attributs[id] = Math.max(0, Number(v) || 0);
+      else if (type === "carriere") etat.carrieres[id] = Math.max(0, Number(v) || 0);
+      else if (type === "spec") {
+        const s = specDe(id);
+        etat.specs[id] = Math.max(0, Math.min(Number(v) || 0, s.cases));
+      } else if (type === "compsym") {
+        etat.comps[id] = { ...niveauComp(id), sym: v };
+      } else if (type === "compniv") {
+        etat.comps[id] = { ...niveauComp(id), niveau: Math.max(0, Number(v) || 0) };
+      } else if (type === "compspec") {
+        const key = t.dataset.comp;
+        const cle = t.dataset.key;
+        const d = niveauComp(key);
+        const liste = t.checked
+          ? [...new Set([...d.specs, cle])]
+          : d.specs.filter(k => k !== cle);
+        etat.comps[key] = { ...d, specs: liste };
+      } else if (type === "pa") {
+        etat.pa = Math.max(0, Number(v) || 0);
+      }
+
+      await sauver();
+      rendre();
+    }
+
+    async function acheter(key) {
+      const c = niveauComp(key);
+      const { cout, accordMJ } = coutProchainNiveau(c);
+
+      if (etat.pa < cout) {
+        alert(`Pas assez de points d'aventure (il faut ${cout}, il reste ${etat.pa}).`);
+        return;
+      }
+      if (accordMJ && !confirm("L'accord du MJ a-t-il été donné ?")) return;
+
+      etat.pa -= cout;
+      etat.comps[key] = { ...c, niveau: c.niveau + 1 };
+      await sauver();
+      rendre();
+    }
+
+    // ---------- Blessures : jets de survie ----------
+
+    // Quand une case d'un groupe Mortelle est atteinte pour la première fois, on demande un jet de Constitution
+    function verifierEntrees(ancien, nouveau) {
+      const lignes = [];
+      const con = etat.attributs["Constitution"] || 0;
+
+      for (let g = 0; g < BLESSURES.length; g++) {
+        const debut = 4 * g + 1;
+        if (g < 6 || ancien >= debut || nouveau < debut) continue;
+
+        const b = BLESSURES[g];
+        const cible = con + b.cons;
+        const d = 1 + Math.floor(Math.random() * 10);
+        lignes.push(`${b.nom} : dé ${d} · cible ${cible} (Constitution ${con}${b.cons ? " " + b.cons : ""})`);
+      }
+
+      if (lignes.length) {
+        afficher("Jet de Constitution (1d10 sous la cible)", [], lignes);
+      }
+    }
+
+    // ---------- Calcul des jets ----------
+
+    function jetDes(relancer) {
+      const jets = [];
+      let d;
+      do {
+        d = 1 + Math.floor(Math.random() * 10);
+        jets.push(d);
+      } while (relancer && d === 10 && jets.length < 20);
+      return { jets, somme: jets.reduce((a, b) => a + b, 0) };
+    }
+
+    function calculerJet(key, clesSpec = []) {
+      const comp = compDe(key);
+      if (!comp) return null;
+      const c = niveauComp(key);
+      if (c.sym === "" && c.niveau === 0) return null;
+
+      const attr = etat.attributs[comp.attr] || 0;
+      const demi = c.niveau === 0 && c.sym === "/";
+      const bonusAttr = demi ? Math.floor(attr / 2) : attr;
+      const specs = [...new Set(clesSpec)].map(specDe).filter(Boolean);
+      const bonusS = specs.reduce((somme, s) => somme + bonusSpec(s), 0);
+      const pen = penaliteBlessures();
+      const { jets, somme } = jetDes(!demi);
+
+      return {
+        comp, jets, des: somme, bonusAttr, demi,
+        niveau: c.niveau, specs, bonusS, pen,
+        total: somme + bonusAttr + c.niveau + bonusS + pen
+      };
+    }
+
+    function lancer(key, clesSpec = []) {
+      const r = calculerJet(key, clesSpec);
+      if (!r) {
+        const nom = compDe(key)?.nom ?? "Test";
+        return afficher(`${nom} : jet impossible`, ["Compétence à 0 sans symbole"]);
+      }
+      afficher(`${r.comp.nom} : ${r.total}`, detailJet(r));
+    }
+
+    function lancerEmbuscade() {
+      const emb = listeComps().find(c => c.nom === "Se cacher / Semer");
+      const r = calculerJet(emb.key, niveauComp(emb.key).specs);
+      if (!r) {
+        return afficher("Embuscade : jet impossible", ["Se cacher / Semer à 0 sans symbole"]);
+      }
+      afficher(`Embuscade : ${r.total}`, detailJet(r), [
+        "Les adversaires font leur jet de Voir ou Perception contre ce total.",
+        "Si personne ne te voit, l'embuscade réussit."
+      ]);
+    }
+
+    function afficher(titre, detail, lignes = []) {
+      document.getElementById("jet").innerHTML =
+        `<div class="titre-jet">${esc(titre)}</div>` +
+        (detail.length ? `<div class="detail">${detail.map(esc).join(" · ")}</div>` : "") +
+        lignes.map(l => `<div class="detail">${esc(l)}</div>`).join("");
+    }
+
+    function detailJet(r) {
+      const parties = [
+        `Dés ${r.jets.join(" + ")} = ${r.des}`,
+        `${r.comp.attr} ${r.bonusAttr}${r.demi ? " (moitié)" : ""}`,
+        `compétence ${r.niveau}`
+      ];
+      for (const s of r.specs) parties.push(`${s.nom} +${bonusSpec(s)}`);
+      if (r.pen) parties.push(`blessures ${r.pen}`);
+      return parties;
+    }
+
+
+    // ---------- Initiative ----------
+
+    function rangsAction(score) {
+      const rangs = [];
+      let r = score;
+      do {
+        rangs.push(r);
+        r -= 10;
+      } while (r > 0);
+      return rangs;
+    }
+
+    function lancerInitiative() {
+      const agi = etat.attributs["Agilité"] || 0;
+      const { jets, somme } = jetDes(true);
+      const score = agi + somme;
+      const rangs = rangsAction(score);
+
+      const lignes = [`Rangs d'action : ${rangs.join(", ")}`];
+      if (document.getElementById("embuscade-ok").checked) {
+        const suite = rangs.slice(1).join(", ") || "aucun";
+        lignes.push(`Embuscade réussie : action 1 avant tout le monde, puis rangs ${suite}`);
+      }
+      afficher(`Initiative : ${score}`, [`Agilité ${agi}`, `Dés ${jets.join(" + ")} = ${somme}`], lignes);
+    }
+
+    // ---------- Export / import ----------
+
+    function exporter() {
+      const nom = (etat.identite.nom || "personnage").replace(/[^a-z0-9_-]+/gi, "_");
+      const donnees = {
+        format: "midgar-fiche",
+        version: 1,
+        date: new Date().toISOString(),
+        fiche: etat
+      };
+      const blob = new Blob([JSON.stringify(donnees, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const lien = document.createElement("a");
+      lien.href = url;
+      lien.download = `midgar-${nom}.json`;
+      document.body.appendChild(lien);
+      lien.click();
+      lien.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    async function importerFichier(fichier) {
+      if (!tokenId) return alert("Sélectionne un token avant d'importer.");
+
+      let donnees;
+      try {
+        donnees = JSON.parse(await fichier.text());
+      } catch (err) {
+        return alert("Fichier illisible : ce n'est pas un JSON valide.");
+      }
+      if (donnees.format !== "midgar-fiche" || !donnees.fiche) {
+        return alert("Ce fichier n'est pas une fiche Midgar.");
+      }
+      if (!confirm("Remplacer la fiche de ce token par celle du fichier ?")) return;
+
+      etat = { ...defaut(), ...donnees.fiche };
+      uiOuvert = null;
+      jetUnique = null;
+      formAjout = null;
+      formSpec = null;
+      await sauver();
+      rendre();
+    }
+
+    // ---------- Événements ----------
+
+    function onClick(e) {
+      const t = e.target.closest("button") ?? e.target;
+
+      if (t.id === "btn-initiative") return lancerInitiative();
+      if (t.id === "btn-embuscade") return lancerEmbuscade();
+      if (t.id === "btn-recharger") return charger();
+      if (t.id === "btn-exporter") return exporter();
+      if (t.id === "btn-importer") return document.getElementById("fichier-import").click();
+      if (t.id === "btn-lancer") {
+        const cle = document.getElementById("sel-spec").value;
+        return lancer(document.getElementById("sel-comp").value, cle ? [cle] : []);
+      }
+      if (t.dataset.onglet) return montrer(t.dataset.onglet);
+
+      if (t.dataset.gearAttr !== undefined) {
+        const attr = t.dataset.gearAttr;
+        formAjout = formAjout === attr ? null : attr;
+        return rendre();
+      }
+      if (t.dataset.ajout !== undefined) {
+        const nom = document.getElementById("ajout-nom").value.trim();
+        if (!nom) return alert("Indique un libellé pour la compétence.");
+        const type = document.getElementById("ajout-type").value;
+        return ajouterCompetence(t.dataset.ajout, nom, type);
+      }
+      if (t.dataset.gearGroupe !== undefined) {
+        const g = t.dataset.gearGroupe;
+        formSpec = formSpec === g ? null : g;
+        return rendre();
+      }
+      if (t.dataset.specAjout !== undefined) {
+        const nom = document.getElementById("ajout-spec-nom").value.trim();
+        if (!nom) return alert("Indique un nom pour la spécialisation.");
+        const cases = Math.min(8, Math.max(1, Number(document.getElementById("ajout-spec-cases").value) || 4));
+        const seuil = Math.max(1, Number(document.getElementById("ajout-spec-seuil").value) || 1);
+        const maxSaisi = Number(document.getElementById("ajout-spec-max").value);
+        const max = maxSaisi > 0 ? maxSaisi : null;
+        const effet = document.getElementById("ajout-spec-effet").value.trim() || "-";
+        return ajouterSpecialisation(t.dataset.specAjout, nom, cases, seuil, max, effet);
+      }
+      if (t.dataset.specAjoutAnnuler !== undefined) {
+        formSpec = null;
+        return rendre();
+      }
+      if (t.dataset.ajoutAnnuler !== undefined) {
+        formAjout = null;
+        return rendre();
+      }
+
+      if (t.dataset.gear !== undefined) {
+        const key = t.dataset.gear;
+        uiOuvert = uiOuvert === key ? null : key;
+        return rendre();
+      }
+
+      if (t.dataset.achat !== undefined) return acheter(t.dataset.achat);
+
+      if (t.dataset.jet !== undefined) {
+        const key = t.dataset.jet;
+        const extra = jetUnique && jetUnique.i === key ? [jetUnique.key] : [];
+        jetUnique = null;
+        lancer(key, [...niveauComp(key).specs, ...extra]);
+        if (uiOuvert === key) rendre();
+        return;
+      }
+    }
+    // ---------- Démarrage ----------
+
+    OBR.onReady(async () => {
+      document.addEventListener("change", onChange);
+      document.addEventListener("click", onClick);
+
+      OBR.player.onChange(async (joueur) => {
+        const id = joueur.selection?.[0];
+        if (!id || id === tokenId) return;
+
+        const [item] = await OBR.scene.items.getItems([id]);
+                if (!(await peutOuvrir(item))) {
+          // Token non autorisé : on garde la fiche du token courant et on la rafraîchit
+          if (tokenId) await charger();
+          return;
+        }
+
+        tokenId = id;
+        localStorage.setItem(CLE_DERNIER, id);
+        await charger(true);
+      });
+            OBR.scene.items.onChange(async (items) => {
+        if (!tokenId) return;
+        const item = items.find(i => i.id === tokenId);
+        if (!item) return;
+
+        // Données distantes, comparées à celles affichées : on ne recharge que s'il y a un vrai changement
+        const distant = { ...defaut(), ...(item.metadata[CLE] ?? {}) };
+        if (JSON.stringify(distant) === JSON.stringify(etat)) return;
+
+        etat = distant;
+        rendre();
+      });
+      const selection = await OBR.player.getSelection();
+      const candidat = selection?.[0] ?? localStorage.getItem(CLE_DERNIER);
+      tokenId = null;
+      if (candidat) {
+        const [item] = await OBR.scene.items.getItems([candidat]);
+        if (await peutOuvrir(item)) {
+          tokenId = candidat;
+          localStorage.setItem(CLE_DERNIER, candidat);
+        }
+      }
+      await charger(true);
+    });
+  </script>
+
+</body>
+
+</html>

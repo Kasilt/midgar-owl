@@ -880,8 +880,10 @@
     // Un MJ voit toutes les fiches ; un joueur seulement celles des tokens qu'il a créés
     async function peutOuvrir(item) {
       if (!item) return false;
-      if (OBR.player.role === "GM") return true;
-      return item.createdUserId === OBR.player.id;
+      const role = await OBR.player.getRole();
+      if (role === "GM") return true;
+      const monId = await OBR.player.getId();
+      return item.createdUserId === monId;
     }
     // ---------- Sauvegarde et chargement ----------
 

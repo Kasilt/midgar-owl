@@ -1,75 +1,78 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
   <meta charset="UTF-8" />
   <title>Midgar - Fiche</title>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
   <link rel="stylesheet" href="style.css" />
 </head>
+
 <body>
+  <main class="conteneur">
+    <header>
+      <div>
+        <h1>Midgar — Le Royaume des Intrigues</h1>
+        <div id="entete" class="sous-titre"></div>
+      </div>
+      <div class="pa">PA <input type="number" min="0" data-type="pa" value="0"></div>
+    </header>
 
-<header>
-  <div>
-    <h1>Midgar — Le Royaume des Intrigues</h1>
-    <div id="entete" class="sous-titre"></div>
-  </div>
-  <div class="pa">PA <input type="number" min="0" data-type="pa" value="0"></div>
-</header>
+    <p id="statut">Sélectionne un token pour voir sa fiche.</p>
 
-<p id="statut">Sélectionne un token pour voir sa fiche.</p>
+    <div id="fiche" hidden>
 
-<div id="fiche" hidden>
+      <div id="jet"><span class="detail">Aucun jet pour l'instant.</span></div>
 
-  <div id="jet"><span class="detail">Aucun jet pour l'instant.</span></div>
+      <nav class="onglets">
+        <button data-onglet="infos" class="actif">Infos</button>
+        <button data-onglet="comps">Compétences</button>
+        <button data-onglet="specs">Spécialisations</button>
+        <button data-onglet="jets">Jets</button>
+      </nav>
 
-  <nav class="onglets">
-    <button data-onglet="infos" class="actif">Infos</button>
-    <button data-onglet="comps">Compétences</button>
-    <button data-onglet="specs">Spécialisations</button>
-    <button data-onglet="jets">Jets</button>
-  </nav>
+      <section id="infos" class="onglet actif">
+        <h2>Identité</h2>
+        <div class="grille" id="identite"></div>
+        <h2>Caractéristiques</h2>
+        <div class="grille" id="attributs"></div>
+        <h2>Blessures</h2>
+        <div id="blessures"></div>
+        <h2>Carrières</h2>
+        <div id="carrieres"></div>
+      </section>
 
-  <section id="infos" class="onglet actif">
-    <h2>Identité</h2>
-    <div class="grille" id="identite"></div>
-    <h2>Caractéristiques</h2>
-    <div class="grille" id="attributs"></div>
-    <h2>Blessures</h2>
-    <div id="blessures"></div>
-    <h2>Carrières</h2>
-    <div id="carrieres"></div>
-  </section>
+      <section id="comps" class="onglet">
+        <div id="competences"></div>
+      </section>
 
-  <section id="comps" class="onglet">
-    <div id="competences"></div>
-  </section>
+      <section id="specs" class="onglet">
+        <div id="specs-contenu"></div>
+      </section>
 
-  <section id="specs" class="onglet">
-    <div id="specs-contenu"></div>
-  </section>
+      <section id="jets" class="onglet">
+        <h2>Lancer un test</h2>
+        <p><label>Compétence <select id="sel-comp"></select></label></p>
+        <p><label>Spécialisation <select id="sel-spec"></select></label></p>
+        <p><button id="btn-lancer">Lancer</button></p>
 
-  <section id="jets" class="onglet">
-    <h2>Lancer un test</h2>
-    <p><label>Compétence <select id="sel-comp"></select></label></p>
-    <p><label>Spécialisation <select id="sel-spec"></select></label></p>
-    <p><button id="btn-lancer">Lancer</button></p>
+        <h2>Initiative</h2>
+        <p><label><input type="checkbox" id="embuscade-ok"> Embuscade réussie</label></p>
+        <p><button id="btn-initiative">Initiative</button></p>
 
-    <h2>Initiative</h2>
-    <p><label><input type="checkbox" id="embuscade-ok"> Embuscade réussie</label></p>
-    <p><button id="btn-initiative">Initiative</button></p>
+        <h2>Embuscade</h2>
+        <p><button id="btn-embuscade">Se cacher / Semer</button></p>
+      </section>
 
-    <h2>Embuscade</h2>
-    <p><button id="btn-embuscade">Se cacher / Semer</button></p>
-  </section>
-
-  <div class="actions-fiche">
-    <button id="btn-recharger">Recharger la fiche</button>
-    <button id="btn-exporter">Exporter</button>
-    <button id="btn-importer">Importer</button>
-    <input type="file" id="fichier-import" accept=".json,application/json" hidden>
-  </div>
-</div>
-
-<script type="module" src="app.js"></script>
+      <div class="actions-fiche">
+        <button id="btn-recharger">Recharger la fiche</button>
+        <button id="btn-exporter">Exporter</button>
+        <button id="btn-importer">Importer</button>
+        <input type="file" id="fichier-import" accept=".json,application/json" hidden>
+      </div>
+    </div>
+  </main>
+  <script type="module" src="app.js"></script>
 </body>
+
 </html>

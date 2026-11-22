@@ -443,3 +443,68 @@ tr.attr-titre td {
 .carte .grille-arme input[type=number],
 .carte .grille-arme input[type=text] { width: 100%; }
 .actions-arme { display: flex; gap: 6px; margin: 4px 0; }
+
+/* ---------- Mise en page fixe : seul le contenu des onglets défile ---------- */
+
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+}
+
+.conteneur {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 16px);
+  min-height: 0;
+  margin: 8px;
+  padding: 12px;
+}
+
+header,
+nav.onglets,
+#jet,
+#statut,
+.actions-fiche {
+  flex-shrink: 0;
+}
+
+#fiche {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+#fiche[hidden] {
+  display: none;
+}
+
+/* Seul l'onglet affiché défile */
+#fiche > .onglet.actif {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* ---------- Colonnes compactes de l'onglet Compétences ---------- */
+
+#competences input[data-type="compniv"] {
+  width: 42px;
+}
+
+#competences td:nth-child(4) {
+  white-space: nowrap;
+}
+
+#competences td:nth-child(4) button {
+  padding: 2px 6px;
+}
+
+#competences td:nth-child(4) .material-symbols-outlined {
+  font-size: 15px;
+}
+
+#competences td:last-child {
+  white-space: nowrap;
+}

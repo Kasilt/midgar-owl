@@ -273,7 +273,7 @@ function panneauSpecs(key, d) {
 
 function rendreCompetences() {
     const toutes = listeComps();
-    let html = `<table><tr><th>Compétence</th><th></th><th>Niveau</th><th>Achat</th><th></th></tr>`;
+      let html = `<table><tr><th>Compétence</th><th></th><th>Niv</th><th>Achat</th><th></th></tr>`;
 
     for (const attr of ATTRIBUTS) {
         html += `<tr class="attr-titre">

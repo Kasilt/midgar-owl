@@ -442,3 +442,4 @@ tr.attr-titre td {
 .carte .grille-arme label { display: flex; flex-direction: column; gap: 2px; }
 .carte .grille-arme input[type=number],
 .carte .grille-arme input[type=text] { width: 100%; }
+.actions-arme { display: flex; gap: 6px; margin: 4px 0; }

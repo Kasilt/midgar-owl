@@ -1267,12 +1267,9 @@
         if (!id || id === tokenId) return;
 
         const [item] = await OBR.scene.items.getItems([id]);
-        if (!(await peutOuvrir(item))) {
-          // On garde la fiche actuelle, et on prévient
-          const entete = document.getElementById("entete");
-          if (tokenId) {
-            entete.textContent = "Token non autorisé : fiche précédente conservée";
-          }
+                if (!(await peutOuvrir(item))) {
+          // Token non autorisé : on garde la fiche du token courant et on la rafraîchit
+          if (tokenId) await charger();
           return;
         }
 
@@ -1280,7 +1277,18 @@
         localStorage.setItem(CLE_DERNIER, id);
         await charger(true);
       });
+            OBR.scene.items.onChange(async (items) => {
+        if (!tokenId) return;
+        const item = items.find(i => i.id === tokenId);
+        if (!item) return;
 
+        // Données distantes, comparées à celles affichées : on ne recharge que s'il y a un vrai changement
+        const distant = { ...defaut(), ...(item.metadata[CLE] ?? {}) };
+        if (JSON.stringify(distant) === JSON.stringify(etat)) return;
+
+        etat = distant;
+        rendre();
+      });
       const selection = await OBR.player.getSelection();
       const candidat = selection?.[0] ?? localStorage.getItem(CLE_DERNIER);
       tokenId = null;

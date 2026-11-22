@@ -1,9 +1,9 @@
 :root {
-    --fond: rgba(35, 38, 46, 0.50);
-    --panneau: rgba(43, 47, 56, 0.30);
-    --champ: rgba(28, 31, 38, 0.30);
+    --fond: rgba(35, 38, 46, 0.10);
+    --panneau: rgba(43, 47, 56, 0.10);
+    --champ: rgba(28, 31, 38, 0.10);
     --bordure: #3c414d;
-    --separateur: #343844;
+    --separateur: #3438443f;
     --texte: #e8eaf0;
     --discret: #9aa1ae;
     --accent: #4f9dff;

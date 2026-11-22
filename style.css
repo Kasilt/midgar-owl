@@ -1,7 +1,7 @@
 :root {
-    --fond: rgba(35, 38, 46, 0.80);
-    --panneau: rgba(43, 47, 56, 0.80);
-    --champ: rgba(28, 31, 38, 0.85);
+    --fond: rgba(35, 38, 46, 0.50);
+    --panneau: rgba(43, 47, 56, 0.30);
+    --champ: rgba(28, 31, 38, 0.30);
     --bordure: #3c414d;
     --separateur: #343844;
     --texte: #e8eaf0;

@@ -508,3 +508,7 @@ nav.onglets,
 #competences td:last-child {
   white-space: nowrap;
 }
+
+input[type=text].champ-invalide { border-color: var(--alerte); color: var(--alerte); }
+
+.ligne-check { display: flex; align-items: center; gap: 6px; margin: 4px 0; color: var(--discret); }
